@@ -1,0 +1,31 @@
+books/ts
+
+import axios from 'axios';
+
+export default async function handler(req, res) {
+  const { category, title, author } = req.query;
+
+  // Build the query string dynamically based on available parameters
+  let query = '';
+
+  if (title) {
+    query += `intitle:${encodeURIComponent(title)}`;  // Search by title, URL-encoded
+  }
+  if (author) {
+    query += (query ? '+' : '') + `inauthor:${encodeURIComponent(author)}`;  // Search by author, URL-encoded, and add '+' if other queries exist
+  }
+  if (!query) {
+    query = category ? encodeURIComponent(category) : 'fiction';  // Default to 'fiction' if no specific query is provided
+  }
+
+  const googleBooksUrl = `https://www.googleapis.com/books/v1/volumes?q=${query}&key=${process.env.NEXT_PUBLIC_GOOGLE_BOOKS_API_KEY}`;
+
+  try {
+    const response = await axios.get(googleBooksUrl);
+    res.status(200).json(response.data);
+  } catch (error) {
+    console.error('Error fetching books from Google Books API:', error.response?.data || error.message);
+    res.status(500).json({ message: 'Failed to fetch books', error: error.response?.data || error.message });
+  }
+}
+

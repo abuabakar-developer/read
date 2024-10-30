@@ -1,0 +1,34 @@
+import { useSession } from 'next-auth/react';
+import { useState } from 'react';
+import axios from 'axios';
+
+const WishlistButton = ({ bookId }) => {
+  const { data: session } = useSession();
+  const [isInWishlist, setIsInWishlist] = useState(false);
+
+  const handleWishlist = async () => {
+    if (!session) {
+      alert('Please log in to add to wishlist');
+      return;
+    }
+
+    if (isInWishlist) {
+      await axios.post('/api/wishlist/remove', { bookId });
+      setIsInWishlist(false);
+    } else {
+      await axios.post('/api/wishlist/add', { bookId });
+      setIsInWishlist(true);
+    }
+  };
+
+  return (
+    <button
+      className={`px-4 py-2 rounded ${isInWishlist ? 'bg-red-500' : 'bg-green-500'}`}
+      onClick={handleWishlist}
+    >
+      {isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
+    </button>
+  );
+};
+
+export default WishlistButton;
