@@ -2,8 +2,22 @@
 "use client"
 import { useEffect, useState } from "react";
 
+// Define types for the data structures used
+interface Item {
+  id: string;
+  description: string;
+  quantity: number;
+  price: number;
+}
+
+interface Order {
+  id: string;
+  created_at: number; // assuming it's a Unix timestamp
+  items: Item[];
+}
+
 export default function OrderHistoryPage() {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -14,8 +28,8 @@ export default function OrderHistoryPage() {
         if (!response.ok) throw new Error("Failed to fetch orders");
         const data = await response.json();
         setOrders(data.orders || []);
-      } catch (error: any) {
-        setError(error.message);
+      } catch (error) {
+        setError((error as Error).message);
       } finally {
         setLoading(false);
       }
@@ -38,7 +52,7 @@ export default function OrderHistoryPage() {
           </div>
           <ul>
             {order.items && order.items.length ? (
-              order.items.map((item: any) => (
+              order.items.map((item) => (
                 <li key={item.id} className="flex justify-between py-2 border-b last:border-none">
                   <div>
                     <p className="font-semibold">{item.description}</p>
@@ -56,7 +70,6 @@ export default function OrderHistoryPage() {
     </div>
   );
 }
-
 
 
 

@@ -17,10 +17,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json(bookData);
   } catch (error) {
+    console.error('Error fetching book data:', error); // Log the error to the server console
     return res.status(500).json({ error: 'Error fetching book data' });
   }
 }
-
 
 
 

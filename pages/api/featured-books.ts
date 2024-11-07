@@ -1,5 +1,25 @@
-// pages/api/featured-books.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
+
+// Define interfaces for the expected structure of the book data
+interface VolumeInfo {
+  title: string;
+  authors?: string[];
+  imageLinks?: {
+    thumbnail?: string;
+  };
+  averageRating?: number;
+  publishedDate?: string;
+  description?: string;
+}
+
+interface BookItem {
+  id: string;
+  volumeInfo: VolumeInfo;
+}
+
+interface ApiResponse {
+  items?: BookItem[];
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_BOOKS_API_KEY;
@@ -8,21 +28,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const response = await fetch(BASE_URL);
-    
+
     // Check for any API response errors
     if (!response.ok) {
       throw new Error('Failed to fetch data from Google Books API');
     }
 
-    const data = await response.json();
+    const data: ApiResponse = await response.json(); // Type the response
 
     if (!data.items || data.items.length === 0) {
       // Handle the case where no books are returned
       return res.status(404).json({ error: 'No books found' });
     }
 
-    // Ensure that each book has the necessary fields, or provide fallback values
-    const books = data.items.map((item: any) => ({
+    // Map through the items and use the defined structure
+    const books = data.items.map((item) => ({
       id: item.id,
       title: item.volumeInfo.title || 'No Title Available',
       cover_url: item.volumeInfo.imageLinks?.thumbnail || '/placeholder.jpg',
@@ -39,5 +59,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(500).json({ error: 'Internal Server Error' });
   }
 }
+
 
 

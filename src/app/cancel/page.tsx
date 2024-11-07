@@ -1,4 +1,3 @@
-// app/cancel/page.tsx
 'use client'
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -18,7 +17,7 @@ export default function CancelPage() {
         />
         <h2 className="text-3xl font-bold text-red-600">Oops! Payment Canceled</h2>
         <p className="text-gray-600 mt-4">
-          Your payment was not processed. Don't worry, you can try again or explore our collection of amazing books!
+          Your payment was not processed. Don&apos;t worry, you can try again or explore our collection of amazing books!
         </p>
         <div className="mt-6 space-x-4">
           <button
@@ -32,3 +31,6 @@ export default function CancelPage() {
     </div>
   );
 }
+
+
+

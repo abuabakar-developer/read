@@ -1,12 +1,27 @@
-// app/success/page.tsx
 'use client';
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
+// Define TypeScript interfaces
+interface LineItem {
+  id: string;
+  description: string;
+  quantity: number;
+  amount_total: number;
+}
+
+interface OrderDetails {
+  id: string;
+  amount_total: number;
+  line_items: {
+    data: LineItem[];
+  };
+}
+
 const SuccessPage = () => {
   const searchParams = useSearchParams();
-  const session_id = searchParams.get('session_id');
-  const [orderDetails, setOrderDetails] = useState<any>(null);
+  const session_id = searchParams?.get('session_id');
+  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
@@ -15,7 +30,7 @@ const SuccessPage = () => {
   // Prevent scrolling on page load
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    return () => {
+    return () => { 
       document.body.style.overflow = 'auto';
     };
   }, []);
@@ -28,7 +43,7 @@ const SuccessPage = () => {
           const response = await fetch(`/api/get-order-details?session_id=${session_id}`);
           if (!response.ok) throw new Error('Failed to fetch order details');
           
-          const data = await response.json();
+          const data: OrderDetails = await response.json();
           setOrderDetails(data);
           setOrderConfirmed(true);
 
@@ -51,9 +66,13 @@ const SuccessPage = () => {
     }
   }, [session_id]);
 
+  // Render loading state
   if (loading) return <p className="text-lg text-gray-700">Loading order details...</p>;
+
+  // Render error state
   if (error) return <p className="text-red-600">{error}</p>;
 
+  // Render success page
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50">
       <div className="min-h-screen flex flex-col items-center justify-center mt-16 pt-16 p-4">
@@ -70,7 +89,7 @@ const SuccessPage = () => {
               <p className="text-lg mb-4"><strong>Amount Paid:</strong> ${(orderDetails.amount_total / 100).toFixed(2)}</p>
               <h3 className="text-xl font-semibold mb-2">Order Details:</h3>
               <ul className="space-y-4">
-                {orderDetails.line_items?.data?.map((item: any) => (
+                {orderDetails.line_items?.data?.map((item: LineItem) => (
                   <li key={item.id} className="flex justify-between items-center bg-gray-50 p-4 rounded-md shadow-sm transition hover:bg-gray-100">
                     <div>
                       <p className="font-medium">{item.description}</p>
@@ -99,7 +118,3 @@ const SuccessPage = () => {
 };
 
 export default SuccessPage;
-
-
-
-

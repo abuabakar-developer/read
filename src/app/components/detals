@@ -1,0 +1,1783 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+'use client';
+import { useEffect, useState,  useCallback } from "react";
+import { useParams } from "next/navigation";
+import Bestsellers from "@/app/components/Bestsellers";
+import ReviewModal from "@/app/components/ReviewModal"; 
+import Footer from "@/app/components/Footer";
+import StarRating from "@/app/components/StarRating";
+import { FaChevronDown, FaHeart, FaPlus, FaMinus, FaShoppingCart } from "react-icons/fa";
+import { useCart } from "@/app/context/CartContext";
+import Image from 'next/image';
+
+
+export default function BookDetails() {
+  const { id } = useParams() as { id: string };
+  const [book, setBook] = useState<Book | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isReviewModalOpen, setReviewModalOpen] = useState(false);
+  const  setReviews = useState([]);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [isAddedToWishlist, setIsAddedToWishlist] = useState(false);
+  const [wishlistMessage, setWishlistMessage] = useState("");
+  const [wishlist, setWishlist] = useState([]);
+  const [newWishlistName, setNewWishlistName] = useState("");
+  const [showWishlistDropdown, setShowWishlistDropdown] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isAddedToCart, setIsAddedToCart] = useState(false);
+  const { addToCart } = useCart();
+
+   
+  const fetchBookDetails = useCallback(async (bookId: string) => {
+    try {
+      const response = await fetch(`https://www.googleapis.com/books/v1/volumes/${bookId}?key=${process.env.NEXT_PUBLIC_GOOGLE_BOOKS_API_KEY}`);
+      if (!response.ok) throw new Error("Error fetching book details: " + response.statusText);
+      const data = await response.json();
+      setBook(mapBookData(data));
+    } catch (error) {
+      console.error("Failed to fetch book details:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+   
+  const fetchReviews = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/reviews?bookId=${id}`);
+      if (!response.ok) throw new Error("Error fetching reviews: " + response.statusText);
+      const data = await response.json();
+      setReviews(data);
+      calculateAverageRating(data);
+    } catch (error) {
+      console.error("Failed to fetch reviews:", error);
+    }
+  }, [id, setReviews]);
+  
+
+
+  useEffect(() => {
+    if (id) {
+      fetchBookDetails(id);
+      fetchReviews();
+      loadWishlist();
+    }
+  }, [id, fetchBookDetails, fetchReviews]);
+
+  const mapBookData = (data) => ({
+    id: data.id,
+    title: data.volumeInfo.title,
+    description: data.volumeInfo.description || "No description available.",
+    cover_url: data.volumeInfo.imageLinks?.thumbnail || "/default-book-cover.jpg",
+    author_name: data.volumeInfo.authors || ["Unknown Author"],
+    published_year: data.volumeInfo.publishedDate || "Unknown Year",
+    price: 29.99, 
+    discounted_price: 19.99, 
+    pages: data.volumeInfo.pageCount || "Unknown", 
+  });
+
+
+  const calculateAverageRating = (reviews) => {
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const avgRating = reviews.length ? totalRating / reviews.length : 0;
+    setAverageRating(avgRating);
+    setTotalReviews(reviews.length);
+  };
+          
+  
+  const loadWishlist = () => {
+    const storedWishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    setWishlist(storedWishlist);
+  };
+
+  const addToWishlist = () => {
+    const existingWishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    if (!existingWishlist.includes(book?.id)) {
+      existingWishlist.push(book);
+      localStorage.setItem('wishlist', JSON.stringify(existingWishlist));
+      setWishlist(existingWishlist);
+      setIsAddedToWishlist(true);
+      setWishlistMessage("Book added to wishlist!");
+
+      setTimeout(() => {
+        setWishlistMessage("");
+      }, 3000);
+    } else {
+      setWishlistMessage("Book is already in your wishlist.");
+    }
+  };
+
+  const toggleWishlistDropdown = () => {
+    setShowWishlistDropdown(!showWishlistDropdown);
+  };
+
+  const handleCreateNewList = () => {
+    if (newWishlistName) {
+      const newList = { name: newWishlistName, books: [book] };
+      const updatedWishlist = [...wishlist, newList];
+      setWishlist(updatedWishlist);
+      localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
+      setNewWishlistName("");
+    }
+  };
+
+  const toggleSynopsis = () => {
+    setIsOpen(!isOpen);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="w-16 h-16 border-t-4 border-blue-600 border-solid rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!book) {
+    return (
+      <div className="text-center py-10">
+        <h1 className="text-2xl font-bold text-gray-700">Book Not Found</h1>
+        <p className="text-gray-500">The book you are looking for might not exist.</p>
+      </div>
+    );
+  }
+
+  const handleAddToCart = () => {
+    if (book) {
+      addToCart({
+        id: book.id,
+        title: book.title,
+        price: book.discounted_price,
+        cover_url: book.cover_url,
+        quantity: 1,
+      });
+      setIsAddedToCart(true);
+    }
+  };
+
+  return (
+         
+    <div className="container mx-auto p-6 md:p-10 bg-white rounded-lg shadow-lg relative">
+    {/* Wishlist Dropdown */}
+    <div className="relative mb-4">
+      <button 
+        onClick={toggleWishlistDropdown} 
+        className="bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200"
+      >
+        Wishlist <FaChevronDown className="inline-block ml-2" />
+      </button>
+      {showWishlistDropdown && (
+        <div className="absolute mt-2 bg-white shadow-lg rounded-lg p-4 w-64 z-10">
+          <h3 className="text-lg font-semibold text-gray-700 mb-4">My Wishlist</h3>
+          <ul className="mb-4">
+            {wishlist.map((item, index) => (
+              <li key={index} className="text-gray-600 mb-2">
+                {item.title || item.name} {/* Showing book title or list name */}
+              </li>
+            ))}
+          </ul>
+          <input
+            type="text"
+            value={newWishlistName}
+            onChange={(e) => setNewWishlistName(e.target.value)}
+            placeholder="Create New List"
+            className="w-full p-2 border border-gray-300 rounded-md mb-4"
+          />
+          <button
+            onClick={handleCreateNewList}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition duration-200 w-full"
+          >
+            Add to Wishlist
+          </button>
+        </div>
+      )}
+
+    </div>
+      {/* Book Details Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Book Image */}
+        <div className="lg:col-span-1 flex justify-center mb-6 lg:mb-0">
+          <div className="relative group w-[80%] lg:w-[90%] bg-gray-100 rounded-lg shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl">
+        <Image   
+             src={book.cover_url}
+             alt={book.title}
+             layout="responsive"
+             width={500}
+             height={750}
+             className="w-full h-full object-cover transition-transform duration-300 transform group-hover:scale-105"
+/>
+          </div>
+        </div>
+
+        {/* Book Details */}
+        <div className="lg:col-span-2 space-y-6 text-center lg:text-left">
+          <h1 className="text-4xl font-bold text-gray-800 hover:text-blue-500 transition duration-300">
+            {book.title}
+          </h1>
+          <p className="text-lg text-gray-600 flex justify-center lg:justify-start items-center">
+            <span className="mr-2">{book.author_name.join(", ")}</span>
+            <span className="font-medium text-green-500">(Author)</span>
+          </p>
+                   {/* New Book Info: Pages and Published Date */}
+            <p className="text-lg text-gray-600 flex justify-center lg:justify-start items-center">
+            <span className="mr-2">{book.pages} pages</span>
+            <span className="font-medium text-green-500">(Pages)</span>
+          </p>
+          <p className="text-lg text-gray-600 flex justify-center lg:justify-start items-center">
+            <span className="mr-2">{book.published_year}</span>
+            <span className="font-medium text-green-500">(Published Date)</span>
+          </p>
+         
+          {/* Book Description */}
+          <div className="bg-gray-50 p-4 rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold text-green-800 mb-2">Book Description:</h2>
+            <p className="text-gray-600 italic">
+              {book.description !== "No description available." ? (
+                <>
+                  {isOpen ? book.description : `${book.description.slice(0, 200)}...`}
+                  <button
+                    onClick={toggleSynopsis}
+                    className="ml-2 text-green-700 underline hover:text-green-600"
+                  >
+                    {isOpen ? "Show Less" : "Show More"}
+                  </button>
+                </>
+              ) : (
+                <span>No description available for this book.</span>
+              )}
+            </p>
+          </div>
+
+
+
+
+          <div className="bg-white border border-gray-200 mt-6 pt-6 px-6 pb-6 rounded-3xl shadow-xl transition duration-300 transform hover:scale-105 hover:shadow-2xl hover:-translate-y-2">
+  {/* Star Rating Section */}
+  <p className="flex items-center justify-center lg:justify-start mb-6">
+    <span className="text-yellow-400 mr-2">
+      <StarRating rating={averageRating} />
+    </span>
+    <span className="font-semibold text-gray-900 text-xl lg:text-3xl">
+      {averageRating.toFixed(1)} out of 5
+    </span>
+    <span className="ml-3 text-gray-500 text-sm lg:text-lg">
+      ({totalReviews} reviews)
+    </span>
+  </p>
+
+  {/* Write a Review Button */}
+  <button
+    className="bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-700 text-white px-8 py-3 mt-6 rounded-full hover:from-indigo-600 hover:to-purple-800 transform hover:scale-110 transition-all duration-500 shadow-md focus:outline-none focus:ring-4 focus:ring-indigo-300"
+    onClick={() => setReviewModalOpen(true)}
+  >
+    Write a Review
+  </button>
+
+  {/* Review Modal */}
+  {isReviewModalOpen && <ReviewModal bookId={id} onClose={() => setReviewModalOpen(false)} />}
+
+  {/* Pricing Section */}
+  <div className="flex flex-col mt-6 pt-4 border-t border-gray-300 lg:flex-row lg:items-center lg:justify-between">
+    <p className="text-4xl font-extrabold text-gray-900 mb-4 lg:mb-0">
+      ${book.discounted_price}
+      <span className="line-through text-gray-400 ml-3 text-2xl">
+        ${book.price}
+      </span>
+    </p>
+  </div>
+
+  {/* Add to Cart Button */}
+  <button
+    className={`bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 mt-4 rounded-full transition-all transform hover:scale-110 shadow-md focus:outline-none focus:ring-4 focus:ring-emerald-300 ${
+      isAddedToCart ? "bg-gray-400 cursor-not-allowed" : "hover:from-emerald-600 hover:to-teal-700"
+    }`}
+    onClick={handleAddToCart}
+    disabled={isAddedToCart}
+  >
+    <span className="flex items-center justify-center">
+      <FaShoppingCart className="mr-2" /> 
+      {isAddedToCart ? "Added to Cart" : "Add to Cart"}
+    </span>
+  </button>
+
+  {/* Add to Wishlist Button */}
+  <button
+    onClick={addToWishlist}
+    className={`mt-6 px-6 py-3 rounded-full transition-all transform hover:scale-110 shadow-md focus:outline-none focus:ring-4 focus:ring-rose-300 ${
+      isAddedToWishlist
+        ? "bg-gray-400 cursor-not-allowed text-white"
+        : "bg-gradient-to-r from-rose-500 to-pink-600 text-white hover:from-rose-600 hover:to-pink-700"
+    }`}
+    disabled={isAddedToWishlist}
+  >
+    <span className="flex items-center justify-center">
+      <FaHeart className="inline-block mr-2" />
+      {isAddedToWishlist ? "Added to Wishlist" : "Add to Wishlist"}
+    </span>
+  </button>
+</div>
+
+
+
+
+
+          {wishlistMessage && (
+            <p className="text-green-800 mt-2">{wishlistMessage}</p>
+          )}
+        </div>
+      </div>
+      <div className="mt-14 p-6 bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100 rounded-lg shadow-md border-l-4 border-green-600">
+      <div className="flex items-center justify-between border border-green-600 p-4 rounded-lg cursor-pointer" onClick={toggleSynopsis}>
+        <h3 className="text-xl font-semibold text-green-800">Synopsis</h3>
+        {isOpen ? <FaMinus className="text-green-600" /> : <FaPlus className="text-green-600" />}
+      </div>
+
+      {isOpen && (
+        <div className="mt-4">
+          <h3 className="text-xl font-semibold text-green-800 mb-2">Abreads Says:</h3>
+          <p className="text-gray-700 leading-relaxed mb-3">
+            At Abreads, we believe that books hold the power to transport us to different worlds and spark imagination like nothing else.
+          </p>
+          <p className="text-gray-700 leading-relaxed mb-3">
+            Whether you are seeking knowledge, adventure, or simply looking for a good story to escape into, this book will not disappoint. Its compelling narrative, 
+            well-crafted characters, and thought-provoking themes make it a must-read.
+          </p>
+          <p className="text-gray-700 leading-relaxed mb-3">
+            From cover to cover, you will be captivated by the authors ability to blend entertainment with enlightenment. This is a journey every reader deserves to take.
+          </p>
+          <p className="text-green-700 font-medium italic">
+            Grab your copy now, and let this book become part of your personal collection of literary treasures!
+          </p>
+        </div>
+      )}
+    </div>
+                                   
+      {/* Footer */}
+      <div className="mt-10">
+        <Bestsellers />
+        <Footer />
+      </div>
+    </div>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+'use client';
+import { useEffect, useState,  useCallback } from "react";
+import { useParams } from "next/navigation";
+import Bestsellers from "@/app/components/Bestsellers";
+import ReviewModal from "@/app/components/ReviewModal"; 
+import Footer from "@/app/components/Footer";
+import StarRating from "@/app/components/StarRating";
+import { FaChevronDown, FaHeart, FaPlus, FaMinus, FaShoppingCart } from "react-icons/fa";
+import { useCart } from "@/app/context/CartContext";
+
+
+export default function BookDetails() {
+  const { id } = useParams() as { id: string };
+  const [book, setBook] = useState<Book | null>(null);
+  const [isLoading] = useState(false);
+  const [isReviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [isAddedToWishlist, setIsAddedToWishlist] = useState(false);
+  const [wishlistMessage, setWishlistMessage] = useState("");
+  const [wishlist, setWishlist] = useState([]);
+  const [newWishlistName, setNewWishlistName] = useState("");
+  const [showWishlistDropdown, setShowWishlistDropdown] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isAddedToCart, setIsAddedToCart] = useState(false);
+  const { addToCart } = useCart();
+
+   
+  const fetchBookDetails = useCallback(async (bookId: string) => {      
+    try {
+      const response = await fetch(`https://www.googleapis.com/books/v1/volumes/${bookId}?key=${process.env.NEXT_PUBLIC_GOOGLE_BOOKS_API_KEY}`);
+      if (!response.ok) throw new Error("Error fetching book details: " + response.statusText);
+      
+      const data = await response.json();
+      const mappedBookData = mapBookData(data); // Ensure this returns a Book object
+  
+      setBook(mappedBookData);
+    } catch (error) {
+      console.error("Failed to fetch book details:", error);    
+    }
+  }, []);
+  
+  const fetchReviews = useCallback(async () => {
+    try {
+      const response = await fetch("/api/reviews"); // replace with your actual endpoint
+      if (!response.ok) throw new Error("Error fetching reviews: " + response.statusText);
+      const data: Review[] = await response.json();
+      setReviews(data);
+      calculateAverageRating(data);
+    } catch (error) {
+      console.error("Failed to fetch reviews:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (id) {
+      fetchBookDetails(id);
+      fetchReviews();
+      loadWishlist();
+    }
+  }, [id, fetchBookDetails, fetchReviews]);
+
+
+  interface Book {
+    id: string;
+    title: string;
+    description: string;
+    cover_url: string;
+    author_name: string[];
+    published_year: string;
+    price: number;
+    discounted_price: number;
+    pages: number | string;
+  }
+  type Review = {
+    id: number; // replace with the correct type
+    rating: number;
+    comment: string;
+  }
+  const mapBookData = (data) => ({
+    id: data.id,
+    title: data.volumeInfo.title,
+    description: data.volumeInfo.description || "No description available.",
+    cover_url: data.volumeInfo.imageLinks?.thumbnail || "/default-book-cover.jpg",
+    author_name: data.volumeInfo.authors || ["Unknown Author"],
+    published_year: data.volumeInfo.publishedDate || "Unknown Year",
+    price: 29.99, 
+    discounted_price: 19.99, 
+    pages: data.volumeInfo.pageCount || "Unknown", 
+  });
+
+
+  const calculateAverageRating = (reviews) => {
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const avgRating = reviews.length ? totalRating / reviews.length : 0;
+    setAverageRating(avgRating);
+    setTotalReviews(reviews.length);
+  };
+          
+  
+  const loadWishlist = () => {
+    const storedWishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    setWishlist(storedWishlist);
+  };
+
+  const addToWishlist = () => {
+    const existingWishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    if (!existingWishlist.includes(book?.id)) {
+      existingWishlist.push(book);
+      localStorage.setItem('wishlist', JSON.stringify(existingWishlist));
+      setWishlist(existingWishlist);
+      setIsAddedToWishlist(true);
+      setWishlistMessage("Book added to wishlist!");
+
+      setTimeout(() => {
+        setWishlistMessage("");
+      }, 3000);
+    } else {
+      setWishlistMessage("Book is already in your wishlist.");
+    }
+  };
+
+  const toggleWishlistDropdown = () => {
+    setShowWishlistDropdown(!showWishlistDropdown);
+  };
+
+  const handleCreateNewList = () => {
+    if (newWishlistName) {
+      const newList = { name: newWishlistName, books: [book] };
+      const updatedWishlist = [...wishlist, newList];
+      setWishlist(updatedWishlist);
+      localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
+      setNewWishlistName("");
+    }
+  };
+
+  const toggleSynopsis = () => {
+    setIsOpen(!isOpen);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="w-16 h-16 border-t-4 border-blue-600 border-solid rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!book) {
+    return (
+      <div className="text-center py-10">
+        <h1 className="text-2xl font-bold text-gray-700">Book Not Found</h1>
+        <p className="text-gray-500">The book you are looking for might not exist.</p>
+      </div>
+    );
+  }
+
+  const handleAddToCart = () => {
+    if (book) {
+      addToCart({
+        id: book.id,
+        title: book.title,
+        price: book.discounted_price,
+        cover_url: book.cover_url,
+        quantity: 1,
+      });
+      setIsAddedToCart(true);
+    }
+  };
+
+  return (
+         
+    <div className="container mx-auto p-6 md:p-10 bg-white rounded-lg shadow-lg relative">
+    {/* Wishlist Dropdown */}
+    <div className="relative mb-4">
+      <button 
+        onClick={toggleWishlistDropdown} 
+        className="bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200"
+      >
+        Wishlist <FaChevronDown className="inline-block ml-2" />
+      </button>
+      {showWishlistDropdown && (
+        <div className="absolute mt-2 bg-white shadow-lg rounded-lg p-4 w-64 z-10">
+          <h3 className="text-lg font-semibold text-gray-700 mb-4">My Wishlist</h3>
+          <ul className="mb-4">
+            {wishlist.map((item, index) => (
+              <li key={index} className="text-gray-600 mb-2">
+                {item.title || item.name} {/* Showing book title or list name */}
+              </li>
+            ))}
+          </ul>
+          <input
+            type="text"
+            value={newWishlistName}
+            onChange={(e) => setNewWishlistName(e.target.value)}
+            placeholder="Create New List"
+            className="w-full p-2 border border-gray-300 rounded-md mb-4"
+          />
+          <button
+            onClick={handleCreateNewList}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition duration-200 w-full"
+          >
+            Add to Wishlist
+          </button>
+        </div>
+      )}
+
+    </div>
+      {/* Book Details Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Book Image */}
+        <div className="lg:col-span-1 flex justify-center mb-6 lg:mb-0">
+          <div className="relative group w-[80%] lg:w-[90%] bg-gray-100 rounded-lg shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl">
+          <img
+              src={book.cover_url}
+              alt={book.title}
+              className="w-full h-full object-cover transition-transform duration-300 transform group-hover:scale-105"
+            />
+          </div>
+        </div>
+
+        {/* Book Details */}
+        <div className="lg:col-span-2 space-y-6 text-center lg:text-left">
+          <h1 className="text-4xl font-bold text-gray-800 hover:text-blue-500 transition duration-300">
+            {book.title}
+          </h1>
+          <p className="text-lg text-gray-600 flex justify-center lg:justify-start items-center">
+            <span className="mr-2">{book.author_name.join(", ")}</span>
+            <span className="font-medium text-green-500">(Author)</span>
+          </p>
+                   {/* New Book Info: Pages and Published Date */}
+            <p className="text-lg text-gray-600 flex justify-center lg:justify-start items-center">
+            <span className="mr-2">{book.pages} pages</span>
+            <span className="font-medium text-green-500">(Pages)</span>
+          </p>
+          <p className="text-lg text-gray-600 flex justify-center lg:justify-start items-center">
+            <span className="mr-2">{book.published_year}</span>
+            <span className="font-medium text-green-500">(Published Date)</span>
+          </p>
+         
+          {/* Book Description */}
+          <div className="bg-gray-50 p-4 rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold text-green-800 mb-2">Book Description:</h2>
+            <p className="text-gray-600 italic">
+              {book.description !== "No description available." ? (
+                <>
+                  {isOpen ? book.description : `${book.description.slice(0, 200)}...`}
+                  <button
+                    onClick={toggleSynopsis}
+                    className="ml-2 text-green-700 underline hover:text-green-600"
+                  >
+                    {isOpen ? "Show Less" : "Show More"}
+                  </button>
+                </>
+              ) : (
+                <span>No description available for this book.</span>
+              )}
+            </p>
+          </div>
+
+ <div className="bg-white border border-gray-200 mt-6 pt-6 px-6 pb-6 rounded-3xl shadow-xl transition duration-300 transform hover:scale-105 hover:shadow-2xl hover:-translate-y-2">
+  {/* Star Rating Section */}
+  <p className="flex items-center justify-center lg:justify-start mb-6">
+    <span className="text-yellow-400 mr-2">
+      <StarRating rating={averageRating} />
+    </span>
+    <span className="font-semibold text-gray-900 text-xl lg:text-3xl">
+      {averageRating.toFixed(1)} out of 5
+    </span>
+    <span className="ml-3 text-gray-500 text-sm lg:text-lg">
+      ({totalReviews} reviews)
+    </span>
+  </p>
+
+  {/* Write a Review Button */}
+  <button
+    className="bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-700 text-white px-8 py-3 mt-6 rounded-full hover:from-indigo-600 hover:to-purple-800 transform hover:scale-110 transition-all duration-500 shadow-md focus:outline-none focus:ring-4 focus:ring-indigo-300"
+    onClick={() => setReviewModalOpen(true)}
+  >
+    Write a Review
+  </button>
+
+  {/* Review Modal */}
+  {isReviewModalOpen && <ReviewModal bookId={id} onClose={() => setReviewModalOpen(false)} />}
+
+  {reviews.map((review) => (
+  <div key={review.id}>
+    <p>{review.comment}</p>
+    <p>Rating: {review.rating}</p>
+  </div>
+))}
+
+  {/* Pricing Section */}
+  <div className="flex flex-col mt-6 pt-4 border-t border-gray-300 lg:flex-row lg:items-center lg:justify-between">
+    <p className="text-4xl font-extrabold text-gray-900 mb-4 lg:mb-0">
+      ${book.discounted_price}
+      <span className="line-through text-gray-400 ml-3 text-2xl">
+        ${book.price}
+      </span>
+    </p>
+  </div>
+
+  {/* Add to Cart Button */}
+  <button
+    className={`bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 mt-4 rounded-full transition-all transform hover:scale-110 shadow-md focus:outline-none focus:ring-4 focus:ring-emerald-300 ${
+      isAddedToCart ? "bg-gray-400 cursor-not-allowed" : "hover:from-emerald-600 hover:to-teal-700"
+    }`}
+    onClick={handleAddToCart}
+    disabled={isAddedToCart}
+  >
+    <span className="flex items-center justify-center">
+      <FaShoppingCart className="mr-2" /> 
+      {isAddedToCart ? "Added to Cart" : "Add to Cart"}
+    </span>
+  </button>
+
+  {/* Add to Wishlist Button */}
+  <button
+    onClick={addToWishlist}
+    className={`mt-6 px-6 py-3 rounded-full transition-all transform hover:scale-110 shadow-md focus:outline-none focus:ring-4 focus:ring-rose-300 ${
+      isAddedToWishlist
+        ? "bg-gray-400 cursor-not-allowed text-white"
+        : "bg-gradient-to-r from-rose-500 to-pink-600 text-white hover:from-rose-600 hover:to-pink-700"
+    }`}
+    disabled={isAddedToWishlist}
+  >
+    <span className="flex items-center justify-center">
+      <FaHeart className="inline-block mr-2" />
+      {isAddedToWishlist ? "Added to Wishlist" : "Add to Wishlist"}
+    </span>
+  </button>
+ </div>
+          {wishlistMessage && (
+            <p className="text-green-800 mt-2">{wishlistMessage}</p>
+          )}
+        </div>
+      </div>
+      <div className="mt-14 p-6 bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100 rounded-lg shadow-md border-l-4 border-green-600">
+      <div className="flex items-center justify-between border border-green-600 p-4 rounded-lg cursor-pointer" onClick={toggleSynopsis}>
+        <h3 className="text-xl font-semibold text-green-800">Synopsis</h3>
+        {isOpen ? <FaMinus className="text-green-600" /> : <FaPlus className="text-green-600" />}
+      </div>
+
+      {isOpen && (
+        <div className="mt-4">
+          <h3 className="text-xl font-semibold text-green-800 mb-2">Abreads Says:</h3>
+          <p className="text-gray-700 leading-relaxed mb-3">
+            At Abreads, we believe that books hold the power to transport us to different worlds and spark imagination like nothing else.
+          </p>
+          <p className="text-gray-700 leading-relaxed mb-3">
+            Whether you are seeking knowledge, adventure, or simply looking for a good story to escape into, this book will not disappoint. Its compelling narrative, 
+            well-crafted characters, and thought-provoking themes make it a must-read.
+          </p>
+          <p className="text-gray-700 leading-relaxed mb-3">
+            From cover to cover, you will be captivated by the authors ability to blend entertainment with enlightenment. This is a journey every reader deserves to take.
+          </p>
+          <p className="text-green-700 font-medium italic">
+            Grab your copy now, and let this book become part of your personal collection of literary treasures!
+          </p>
+        </div>
+      )}
+    </div>
+                                   
+      {/* Footer */}
+      <div className="mt-10">
+        <Bestsellers />
+        <Footer />
+      </div>
+    </div>
+  );
+}
+
+
+
+
+
+
+
+// src/app/layout.tsx
+'use client';
+import './globals.css';
+import Navbar from './components/Navbar';
+import SessionProvider from './components/SessionProvider';
+import FeaturedBooks from './components/FeaturedBooks';
+import ExploreBooks from './components/ExploreBooks';
+import React, { useState } from 'react';
+import { CartProvider } from './context/CartContext';
+import { usePathname } from 'next/navigation'; 
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+import { persistor, store } from '../app/redux/store';
+import Footer from './components/Footer';
+import Bestsellers from './components/Bestsellers';
+import HeroSection from './components/Hero';
+import ComingSoon from './components/ComingSoon';
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedBookId, setSelectedBookId] = useState<string | null>(null); 
+  const pathname = usePathname();
+
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setSearchTerm(''); // Clear search term when a category is selected
+  };
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    setSelectedCategory(null); // Clear category when searching
+  };
+
+  const handleBookSelect = (bookId: string) => {
+    setSelectedBookId(bookId); // Set the selected book ID
+  };
+
+  const isDetailsPage = pathname?.startsWith('/details');
+
+  return (
+    <html lang="en">
+      <body>
+        <SessionProvider>
+          <CartProvider>
+              {!isDetailsPage && (
+                <Provider store={store}>
+                  <PersistGate loading={null} persistor={persistor}>
+                    <div className="pb-14">
+                      <Navbar 
+                        onSearch={handleSearch} 
+                        onCategorySelect={handleCategorySelect} 
+                        currentBookId={selectedBookId} 
+                      />
+                      <main className="flex-grow">{children}</main>
+                    </div>
+                    <div className='pt-8 mt-8'>
+                      <HeroSection />
+                    </div>
+                    <div>
+                      <Bestsellers />
+                    </div>
+                    <div>
+                      <FeaturedBooks onBookSelect={handleBookSelect} />
+                    </div>
+                    <div className='pt-4 mt-4'>
+                      <ComingSoon />
+                    </div>
+                    <div>
+                      <ExploreBooks category={selectedCategory} searchTerm={searchTerm} />
+                    </div>
+                    <div className='pt-6 mt-6'>
+                      <Footer />
+                    </div>
+                  </PersistGate>
+                </Provider>
+              )}
+              {children}
+          </CartProvider>
+        </SessionProvider>
+      </body>
+    </html>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+'use client';
+import { useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+
+// Define TypeScript interfaces
+interface LineItem {
+  id: string;
+  description: string;
+  quantity: number;
+  amount_total: number;
+}
+
+interface OrderDetails {
+  id: string;
+  amount_total: number;
+  line_items: {
+    data: LineItem[];
+  };
+}
+
+const SuccessPage = () => {
+  const searchParams = useSearchParams();
+  const session_id = searchParams.get('session_id');
+  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [orderConfirmed, setOrderConfirmed] = useState(false);
+  const router = useRouter();
+
+  // Prevent scrolling on page load
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
+  // Fetch order details and save to history
+  useEffect(() => {
+    if (session_id) {
+      const fetchAndSaveOrder = async () => {
+        try {
+          const response = await fetch(`/api/get-order-details?session_id=${session_id}`);
+          if (!response.ok) throw new Error('Failed to fetch order details');
+          
+          const data: OrderDetails = await response.json();
+          setOrderDetails(data);
+          setOrderConfirmed(true);
+
+          // Save order to history
+          await fetch('/api/save-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...data, userId: 'sampleUserId' }),
+          });
+        } catch (error) {
+          setError('Unable to load order details');
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchAndSaveOrder();
+    } else {
+      setError('Session ID is missing');
+      setLoading(false);
+    }
+  }, [session_id]);
+
+  // Render loading state
+  if (loading) return <p className="text-lg text-gray-700">Loading order details...</p>;
+
+  // Render error state
+  if (error) return <p className="text-red-600">{error}</p>;
+
+  // Render success page
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50">
+      <div className="min-h-screen flex flex-col items-center justify-center mt-16 pt-16 p-4">
+        <div className="bg-white shadow-lg p-8 rounded-lg max-w-3xl w-full sm:w-11/12 md:w-3/4 lg:w-full transition transform hover:scale-105">
+          <h1 className="text-4xl font-bold mb-6 text-center text-green-600">Order Success!</h1>
+          {orderConfirmed && (
+            <p className="text-lg text-green-500 mb-4">Your order has been confirmed!</p>
+          )}
+          {orderDetails ? (
+            <div>
+              <h2 className="text-2xl font-semibold mb-4">Thank you for your order!</h2>
+              <div className="border-t border-gray-200 my-4" />
+              <p className="text-lg mb-2"><strong>Order ID:</strong> {orderDetails.id}</p>
+              <p className="text-lg mb-4"><strong>Amount Paid:</strong> ${(orderDetails.amount_total / 100).toFixed(2)}</p>
+              <h3 className="text-xl font-semibold mb-2">Order Details:</h3>
+              <ul className="space-y-4">
+                {orderDetails.line_items?.data?.map((item: LineItem) => (
+                  <li key={item.id} className="flex justify-between items-center bg-gray-50 p-4 rounded-md shadow-sm transition hover:bg-gray-100">
+                    <div>
+                      <p className="font-medium">{item.description}</p>
+                      <p className="text-sm text-gray-500"><strong>Quantity:</strong> {item.quantity}</p>
+                    </div>
+                    <p className="text-lg font-semibold">${(item.amount_total / 100).toFixed(2)}</p>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6 flex space-x-4">
+                <button 
+                  onClick={() => router.replace('/')} 
+                  className="inline-block px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                >
+                  Return to Home
+                </button>
+              </div>   
+            </div>
+          ) : (
+            <p>Order details not available.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SuccessPage;
+
+
+
+
+
+
+
+
+
+import mongoose from 'mongoose';
+
+const MONGO_URI = process.env.MONGO_URL;
+
+if (!MONGO_URI) {
+  throw new Error("Please define the MONGO_URL environment variable inside .env.local");
+}
+
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+async function dbConnect() {
+  if (cached.conn) {
+    return cached.conn;
+  }          
+
+  // Add logging to help debug
+  console.log("Attempting to connect to MongoDB with URI:", MONGO_URI);
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGO_URI).then((mongoose) => {
+      console.log("MongoDB connected successfully");
+      return mongoose;
+    }).catch((error) => {
+      console.error("MongoDB connection error:", error);
+      throw new Error("MongoDB connection failed");
+    });
+  }
+
+  cached.conn = await cached.promise;
+  return cached.conn;
+}
+
+export default dbConnect;
+
+
+
+
+///pages/orders.ts
+
+import type { NextApiRequest, NextApiResponse } from 'next';
+import dbConnect from '@/app/utils/dbConnect';
+
+interface CartItem {
+  name: string;
+  image: string;
+  price: number;
+  quantity: number;
+}
+
+interface Order {
+  user: string;
+  items: CartItem[];
+  date: Date;
+  status: string;
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { method } = req;
+
+  if (method === 'POST') {
+    try {
+      const { cartItems, user } = req.body; // Cart items and user info
+      const { db } = await dbConnect();
+
+      const newOrder: Order = {
+        user: user._id,
+        items: cartItems,
+        date: new Date(),
+        status: 'pending',
+      };
+
+      const result = await db.collection('orders').insertOne(newOrder);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to place order' });
+    }
+  } else {
+    res.setHeader('Allow', ['POST']);
+    res.status(405).end(`Method ${method} Not Allowed`);
+  }
+}
+
+
+
+//models/orders.ts
+
+
+import mongoose from 'mongoose';
+
+const OrderSchema = new mongoose.Schema({
+  date: { type: Date, required: true },
+  status: { type: String, required: true },
+  items: [{
+    name: { type: String, required: true },
+    price: { type: Number, required: true },
+    quantity: { type: Number, required: true },
+    image: { type: String, required: true },
+  }],
+  stripeSessionId: { type: String, required: true },
+});
+
+const Order = mongoose.models.Order || mongoose.model('Order', OrderSchema);
+
+export default Order;
+
+
+
+
+
+
+// pages/api/orders.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+import dbConnect from '@/app/utils/dbConnect';
+import Order from '@/app/models/Orders';
+
+interface CartItems {
+  name: string;
+  image: string;
+  price: number;
+  quantity: number;
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { method } = req;
+
+  await dbConnect(); // Establish database connection
+
+  if (method === 'POST') {
+    try {
+      const { cartItems, user } = req.body; // Cart items and user info
+
+      // Create a new order using the Order model
+      const newOrder = new Order({
+        user: user._id,
+        items: cartItems,
+        date: new Date(),
+        status: 'pending',
+      });
+
+      // Save the new order to the database
+      const result = await newOrder.save();
+      res.status(200).json({ message: 'Order placed successfully', order: result });
+    } catch (error) {
+      console.error('Error placing order:', error);
+      res.status(500).json({ message: 'Failed to place order' });
+    }
+  } else {
+    res.setHeader('Allow', ['POST']);
+    res.status(405).end(`Method ${method} Not Allowed`);
+  }
+}
+
+
+///pages/review/id.tsx
+
+import { NextApiRequest, NextApiResponse } from "next";
+import dbConnect from "@/app/utils/dbConnect";
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { bookId } = req.query;
+
+  // Ensure bookId is a string
+  if (typeof bookId !== "string") {
+    return res.status(400).json({ message: "Invalid bookId parameter." });
+  }
+
+  const { db } = await dbConnect();
+
+  if (req.method === "GET") {
+    try {
+      const reviews = await db.collection("reviews").find({ bookId }).toArray();
+      return res.status(200).json({ reviews });
+    } catch (error) {
+      console.error("Error fetching reviews:", error); // Log the error for debugging
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  }
+
+  if (req.method === "POST") {
+    const { user, comment, rating } = req.body;
+
+    // Validate incoming data
+    if (!user || !comment || rating === undefined) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    try {
+      const newReview = { bookId, user, comment, rating };
+      await db.collection("reviews").insertOne(newReview);
+      return res.status(201).json(newReview);
+    } catch (error) {
+      console.error("Error inserting review:", error); // Log the error for debugging
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  }
+
+  // Handle other HTTP methods
+  return res.status(405).json({ message: "Method Not Allowed" });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+'use client';
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import Bestsellers from "@/app/components/Bestsellers";
+import ReviewModal from "@/app/components/ReviewModal"; 
+import Footer from "@/app/components/Footer";
+import StarRating from "@/app/components/StarRating";
+import { FaChevronDown, FaHeart, FaPlus, FaMinus, FaShoppingCart } from "react-icons/fa";
+import { useCart } from "@/app/context/CartContext";
+import Image from "next/image";
+
+export default function BookDetails() {
+  const { id } = useParams() as { id: string };
+  const [book, setBook] = useState<Book | null>(null);
+  const [isLoading] = useState(false);
+  const [isReviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews] = useState(0);
+  const [isAddedToWishlist, setIsAddedToWishlist] = useState(false);
+  const [wishlistMessage, setWishlistMessage] = useState("");
+  const [wishlist, setWishlist] = useState<Wishlist[]>([]);
+  const [newWishlistName, setNewWishlistName] = useState("");
+  const [showWishlistDropdown, setShowWishlistDropdown] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isAddedToCart, setIsAddedToCart] = useState(false);
+  const { addToCart } = useCart();
+
+   
+  const fetchBookDetails = async (bookId: string) => {
+    try {
+      const response = await fetch(`https://www.googleapis.com/books/v1/volumes/${bookId}?key=${process.env.NEXT_PUBLIC_GOOGLE_BOOKS_API_KEY}`);
+      if (!response.ok) throw new Error("Error fetching book details: " + response.statusText);
+  
+      const data = await response.json();
+      const mappedBookData = mapBookData(data); // Ensure this returns a Book object
+  
+      setBook(mappedBookData);
+    } catch (error) {
+      console.error("Failed to fetch book details:", error);
+    }
+  };
+  
+  const fetchReviews = async () => {
+    try {
+      const response = await fetch("/api/reviews"); // replace with your actual endpoint
+      if (!response.ok) throw new Error("Error fetching reviews: " + response.statusText);
+      const data: Review[] = await response.json();
+      setReviews(data);
+      calculateAverageRating(data);
+    } catch (error) {
+      console.error("Failed to fetch reviews:", error);
+    }
+  };
+    // Added calculateAverageRating as a dependency
+  
+
+  useEffect(() => {
+    if (id) {
+      fetchBookDetails(id);
+      fetchReviews();
+      loadWishlist();
+    }
+  }, [id, fetchBookDetails, fetchReviews]);
+
+
+  interface Book {
+    id: string;
+    title: string;
+    description: string;
+    cover_url: string;
+    author_name: string[];
+    published_year: number;
+    price: number;
+    discounted_price: number;
+    pages?: number;
+  }
+  type Wishlist = {
+    name: string;
+    books: (Book | null)[];
+  };
+
+  interface Review {
+    id: string;
+    content: string; // Text of the review
+    author: string;
+    comment: string;
+    rating: number;
+  }
+  interface BookData {
+    id: string;
+    volumeInfo: {
+      title: string;
+      description?: string;
+      imageLinks?: {
+        thumbnail?: string;
+      };
+      authors?: string[];
+      publishedDate?: string;
+    };
+    saleInfo?: {
+      listPrice?: {
+        amount: number;
+      };
+      pageCount?: number; 
+    };
+  }
+
+  
+  const mapBookData = (data: BookData): Book => ({
+    id: data.id,
+    title: data.volumeInfo.title,
+    description: data.volumeInfo.description || "No description available.",
+    cover_url: data.volumeInfo.imageLinks?.thumbnail || "default-cover-url.jpg", 
+    author_name: data.volumeInfo.authors || ["Unknown Author"],    
+    published_year: parseInt(data.volumeInfo.publishedDate?.split("-")[0] || "0", 10),
+    price: data.saleInfo?.listPrice?.amount || 0, 
+    discounted_price: data.saleInfo?.listPrice?.amount || 0, 
+    pages: (data.volumeInfo as { pageCount?: number }).pageCount ?? 0, 
+  });
+  
+
+  const calculateAverageRating = (reviews: Review[]) => {
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const avgRating = reviews.length ? totalRating / reviews.length : 0;
+    setAverageRating(avgRating);
+  };
+          
+  
+  const loadWishlist = () => {
+    const storedWishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    setWishlist(storedWishlist);
+  };
+
+  const addToWishlist = () => {
+    const existingWishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    if (!existingWishlist.includes(book?.id)) {
+      existingWishlist.push(book);
+      localStorage.setItem('wishlist', JSON.stringify(existingWishlist));
+      setWishlist(existingWishlist);
+      setIsAddedToWishlist(true);
+      setWishlistMessage("Book added to wishlist!");
+
+      setTimeout(() => {
+        setWishlistMessage("");
+      }, 3000);
+    } else {
+      setWishlistMessage("Book is already in your wishlist.");
+    }
+  };
+
+  const toggleWishlistDropdown = () => {
+    setShowWishlistDropdown(!showWishlistDropdown);
+  };
+
+  const handleCreateNewList = () => {
+    if (newWishlistName) {
+      const newList = { name: newWishlistName, books: [book] };
+      const updatedWishlist = [...wishlist, newList];
+      setWishlist(updatedWishlist);
+      localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
+      setNewWishlistName("");
+    }
+  };
+
+  const toggleSynopsis = () => {
+    setIsOpen(!isOpen);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="w-16 h-16 border-t-4 border-blue-600 border-solid rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!book) {
+    return (
+      <div className="text-center py-10">
+        <h1 className="text-2xl font-bold text-gray-700">Book Not Found</h1>
+        <p className="text-gray-500">The book you are looking for might not exist.</p>
+      </div>
+    );
+  }
+
+  const handleAddToCart = () => {
+    if (book) {
+      addToCart({
+        id: book.id,
+        title: book.title,
+        price: book.discounted_price,
+        cover_url: book.cover_url,
+        quantity: 1,
+      });
+      setIsAddedToCart(true);
+    }
+  };
+
+  return (
+         
+    <div className="container mx-auto p-6 md:p-10 bg-white rounded-lg shadow-lg relative">
+    {/* Wishlist Dropdown */}
+    <div className="relative mb-4">
+      <button 
+        onClick={toggleWishlistDropdown} 
+        className="bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200"
+      >
+        Wishlist <FaChevronDown className="inline-block ml-2" />
+      </button>
+      {showWishlistDropdown && (
+        <div className="absolute mt-2 bg-white shadow-lg rounded-lg p-4 w-64 z-10">
+          <h3 className="text-lg font-semibold text-gray-700 mb-4">My Wishlist</h3>
+          <ul className="mb-4">
+            {wishlist.map((item, index) => (
+              <li key={index} className="text-gray-600 mb-2">
+                {item.name || item.name} 
+              </li>
+            ))}
+          </ul>
+          <input
+            type="text"
+            value={newWishlistName}
+            onChange={(e) => setNewWishlistName(e.target.value)}
+            placeholder="Create New List"
+            className="w-full p-2 border border-gray-300 rounded-md mb-4"
+          />
+          <button
+            onClick={handleCreateNewList}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition duration-200 w-full"
+          >
+            Add to Wishlist
+          </button>
+        </div>
+      )}
+
+    </div>
+      {/* Book Details Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Book Image */}
+        <div className="lg:col-span-1 flex justify-center mb-6 lg:mb-0">
+      <div className="relative group w-[80%] lg:w-[90%] bg-gray-100 rounded-lg shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl">
+        <div className="relative w-full h-72"> {/* Set a fixed height for the image container */}
+          <Image
+            src={book.cover_url}
+            alt={book.title}
+            layout="fill" // Fill the parent container
+            objectFit="cover" // Maintain cover style
+            className="transition-transform duration-300 transform group-hover:scale-105"
+          />
+        </div>
+      </div>
+    </div>
+
+        {/* Book Details */}
+        <div className="lg:col-span-2 space-y-6 text-center lg:text-left">
+          <h1 className="text-4xl font-bold text-gray-800 hover:text-blue-500 transition duration-300">
+            {book.title}
+          </h1>
+          <p className="text-lg text-gray-600 flex justify-center lg:justify-start items-center">
+            <span className="mr-2">{book.author_name.join(", ")}</span>
+            <span className="font-medium text-green-500">(Author)</span>
+          </p>
+                   {/* New Book Info: Pages and Published Date */}
+            <p className="text-lg text-gray-600 flex justify-center lg:justify-start items-center">
+            <span className="mr-2">{book.pages} pages</span>
+            <span className="font-medium text-green-500">(Pages)</span>
+          </p>
+          <p className="text-lg text-gray-600 flex justify-center lg:justify-start items-center">
+            <span className="mr-2">{book.published_year}</span>
+            <span className="font-medium text-green-500">(Published Date)</span>
+          </p>
+         
+          {/* Book Description */}
+          <div className="bg-gray-50 p-4 rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold text-green-800 mb-2">Book Description:</h2>
+            <p className="text-gray-600 italic">
+              {book.description !== "No description available." ? (
+                <>
+                  {isOpen ? book.description : `${book.description.slice(0, 200)}...`}
+                  <button
+                    onClick={toggleSynopsis}
+                    className="ml-2 text-green-700 underline hover:text-green-600"
+                  >
+                    {isOpen ? "Show Less" : "Show More"}
+                  </button>
+                </>
+              ) : (
+                <span>No description available for this book.</span>
+              )}
+            </p>
+          </div>
+
+ <div className="bg-white border border-gray-200 mt-6 pt-6 px-6 pb-6 rounded-3xl shadow-xl transition duration-300 transform hover:scale-105 hover:shadow-2xl hover:-translate-y-2">
+  {/* Star Rating Section */}
+  <p className="flex items-center justify-center lg:justify-start mb-6">
+    <span className="text-yellow-400 mr-2">
+      <StarRating rating={averageRating} />
+    </span>
+    <span className="font-semibold text-gray-900 text-xl lg:text-3xl">
+      {averageRating.toFixed(1)} out of 5
+    </span>
+    <span className="ml-3 text-gray-500 text-sm lg:text-lg">
+      ({totalReviews} reviews)
+    </span>
+  </p>
+
+  {/* Write a Review Button */}
+  <button
+    className="bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-700 text-white px-8 py-3 mt-6 rounded-full hover:from-indigo-600 hover:to-purple-800 transform hover:scale-110 transition-all duration-500 shadow-md focus:outline-none focus:ring-4 focus:ring-indigo-300"
+    onClick={() => setReviewModalOpen(true)}
+  >
+    Write a Review
+  </button>
+
+  {/* Review Modal */}
+  {isReviewModalOpen && <ReviewModal bookId={id} onClose={() => setReviewModalOpen(false)}   reviews={reviews as Review[]}/>}
+
+  {reviews.map((review) => (
+  <div key={review.id}>
+    <p>{review.comment}</p>
+    <p>Rating: {review.rating}</p>
+  </div>
+))}
+
+  {/* Pricing Section */}
+  <div className="flex flex-col mt-6 pt-4 border-t border-gray-300 lg:flex-row lg:items-center lg:justify-between">
+    <p className="text-4xl font-extrabold text-gray-900 mb-4 lg:mb-0">
+      ${book.discounted_price}
+      <span className="line-through text-gray-400 ml-3 text-2xl">
+        ${book.price}
+      </span>
+    </p>
+  </div>
+
+  {/* Add to Cart Button */}
+  <button
+    className={`bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 mt-4 rounded-full transition-all transform hover:scale-110 shadow-md focus:outline-none focus:ring-4 focus:ring-emerald-300 ${
+      isAddedToCart ? "bg-gray-400 cursor-not-allowed" : "hover:from-emerald-600 hover:to-teal-700"
+    }`}
+    onClick={handleAddToCart}
+    disabled={isAddedToCart}
+  >
+    <span className="flex items-center justify-center">
+      <FaShoppingCart className="mr-2" /> 
+      {isAddedToCart ? "Added to Cart" : "Add to Cart"}
+    </span>
+  </button>
+
+  {/* Add to Wishlist Button */}
+  <button
+    onClick={addToWishlist}
+    className={`mt-6 px-6 py-3 rounded-full transition-all transform hover:scale-110 shadow-md focus:outline-none focus:ring-4 focus:ring-rose-300 ${
+      isAddedToWishlist
+        ? "bg-gray-400 cursor-not-allowed text-white"
+        : "bg-gradient-to-r from-rose-500 to-pink-600 text-white hover:from-rose-600 hover:to-pink-700"
+    }`}
+    disabled={isAddedToWishlist}
+  >
+    <span className="flex items-center justify-center">
+      <FaHeart className="inline-block mr-2" />
+      {isAddedToWishlist ? "Added to Wishlist" : "Add to Wishlist"}
+    </span>
+  </button>
+ </div>
+          {wishlistMessage && (
+            <p className="text-green-800 mt-2">{wishlistMessage}</p>
+          )}
+        </div>
+      </div>
+      <div className="mt-14 p-6 bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100 rounded-lg shadow-md border-l-4 border-green-600">
+      <div className="flex items-center justify-between border border-green-600 p-4 rounded-lg cursor-pointer" onClick={toggleSynopsis}>
+        <h3 className="text-xl font-semibold text-green-800">Synopsis</h3>
+        {isOpen ? <FaMinus className="text-green-600" /> : <FaPlus className="text-green-600" />}
+      </div>
+
+      {isOpen && (
+        <div className="mt-4">
+          <h3 className="text-xl font-semibold text-green-800 mb-2">Abreads Says:</h3>
+          <p className="text-gray-700 leading-relaxed mb-3">
+            At Abreads, we believe that books hold the power to transport us to different worlds and spark imagination like nothing else.
+          </p>
+          <p className="text-gray-700 leading-relaxed mb-3">
+            Whether you are seeking knowledge, adventure, or simply looking for a good story to escape into, this book will not disappoint. Its compelling narrative, 
+            well-crafted characters, and thought-provoking themes make it a must-read.
+          </p>
+          <p className="text-gray-700 leading-relaxed mb-3">
+            From cover to cover, you will be captivated by the authors ability to blend entertainment with enlightenment. This is a journey every reader deserves to take.
+          </p>
+          <p className="text-green-700 font-medium italic">
+            Grab your copy now, and let this book become part of your personal collection of literary treasures!
+          </p>
+        </div>
+      )}
+    </div>
+                                   
+      {/* Footer */}
+      <div className="mt-10">
+        <Bestsellers />
+        <Footer />
+      </div>
+    </div>
+  );
+}
+
+
+
+
+
+
+// pages/api/saveBooks.ts
+import { NextApiRequest, NextApiResponse } from 'next';
+import dbConnect from '@/app/utils/dbConnect';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method === 'POST') {
+    const books = req.body;
+
+    try {
+      // Ensure MongoDB connection
+      const client = await dbConnect();
+
+      // If you need to use `client`, you can use it for various operations
+      const db = client.db(); // Access the database using the client
+
+      const result = await db.collection('books').insertMany(books);
+
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Error saving books:", error);
+      res.status(500).json({ error: 'Failed to save books' });
+    }
+  } else {
+    res.setHeader('Allow', ['POST']);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
+  }
+}
+
+
+
+
+
+//books/id.ts
+
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { id } = req.query;
+
+  if (!id) {
+    return res.status(400).json({ error: 'Book ID is required' });
+  }
+
+  try {
+    const response = await fetch(`https://www.googleapis.com/books/v1/volumes/${id}?key=${process.env.NEXT_PUBLIC_GOOGLE_BOOKS_API_KEY}`);
+    if (!response.ok) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    const bookData = await response.json();
+
+    return res.status(200).json(bookData);
+  } catch (error) {
+    return res.status(500).json({ error: 'Error fetching book data' });
+  }
+}
+
+
+
+
+import React, { forwardRef, useState } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+interface ContactUsProps {
+  // You can define additional props if needed
+}
+
+// Use generic types to specify the ref type
+export const ContactUs = forwardRef<HTMLElement, ContactUsProps>((props, ref) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+
+    setTimeout(() => {
+      setIsSubmitting(false);
+      toast.success('Thank you for your message! We will get back to you soon.', {
+        position: 'top-center',
+        autoClose: 5000,
+      });
+    }, 1500);
+  };
+
+  return (
+    <section
+      ref={ref} // ref is now correctly typed
+      id="contact"
+      className="flex flex-col items-center py-16 px-6 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-800 transition-colors duration-500"
+    >
+      <ToastContainer />
+      <h2 className="text-4xl lg:text-5xl font-bold mb-8 text-center text-green-800 leading-snug">
+        We&apos;d Love to Hear from You!
+      </h2>
+      
+      <div className="flex flex-col lg:flex-row items-center w-full max-w-5xl space-y-8 lg:space-y-0 lg:space-x-10">
+        {/* Information Section */}
+        <div className="lg:w-1/2 flex flex-col items-center lg:items-start space-y-6 px-6 text-center lg:text-left">
+          <p className="text-lg lg:text-xl leading-relaxed text-gray-700">
+            Whether you have a question about our bookstore, need assistance, or just want to chat about books, we&apos;re here for you!
+          </p>
+          <div>
+            <h3 className="text-lg font-semibold text-green-700">Our Location</h3>
+            <p className="text-sm text-gray-600">123 Book Street, Booktown, BK 12345</p>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-green-700">Contact Information</h3>
+            <p className="text-sm">
+              Email: <a href="mailto:support@abakarreads.com" className="text-green-600 hover:text-green-800">support@abakarreads.com</a>
+            </p>
+            <p className="text-sm">
+              Phone: <a href="tel:+123456789" className="text-green-600 hover:text-green-800">+123-456-789</a>
+            </p>
+          </div>
+        </div>
+
+        {/* Contact Form */}
+        <div className="lg:w-1/2 w-full px-6">
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white rounded-3xl shadow-xl p-8 space-y-6 text-gray-800 hover:shadow-2xl transition-shadow duration-300"
+          >
+            <div>
+              <label className="block text-base font-medium mb-2 text-gray-700">Name</label>
+              <input
+                type="text"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 transition ease-in-out duration-200"
+                placeholder="Your Name"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-base font-medium mb-2 text-gray-700">Email</label>
+              <input
+                type="email"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 transition ease-in-out duration-200"
+                placeholder="Your Email"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-base font-medium mb-2 text-gray-700">Message</label>
+              <textarea
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 transition ease-in-out duration-200"
+                rows={5}
+                placeholder="Your Message"
+                required
+              ></textarea>
+            </div>
+            <button
+              type="submit"
+              className={`w-full bg-green-500 text-white py-2 rounded-lg font-semibold hover:bg-green-600 transition-all duration-200 ${
+                isSubmitting ? 'cursor-wait' : ''
+              }`}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <span className="loader h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin inline-block"></span>
+              ) : (
+                'Send Message'
+              )}
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+  );
+});
+
+ContactUs.displayName = 'ContactUs';
+
+export default ContactUs;
+
+
+

@@ -31,8 +31,12 @@ const ComingSoon = () => {
         }
         const data = await response.json();
         setBooks(data.items || []);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('An unexpected error occurred');
+        }
       } finally {
         setLoading(false);
       }
@@ -124,5 +128,4 @@ const ComingSoon = () => {
 };
 
 export default ComingSoon;
-
 

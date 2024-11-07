@@ -103,7 +103,7 @@ const AccountPage: React.FC = () => {
                 className="text-lg font-medium text-gray-800 w-full bg-gray-100 outline-none"
               />
             ) : (
-              <p className="text-lg font-medium text-gray-800">{userData.name}</p>
+              <p className="text-lg font-medium text-gray-800">{userData?.name || "Guest"}</p>
             )}
           </div>
 
@@ -119,7 +119,7 @@ const AccountPage: React.FC = () => {
                 className="text-lg font-medium text-gray-800 w-full bg-gray-100 outline-none"
               />
             ) : (
-              <p className="text-lg font-medium text-gray-800">{userData.email}</p>
+              <p className="text-lg font-medium text-gray-800">{userData?.email || "Not Provided"}</p>
             )}
           </div>
         </div>
@@ -155,8 +155,6 @@ const AccountPage: React.FC = () => {
 };
 
 export default AccountPage;
-
-
 
 
 

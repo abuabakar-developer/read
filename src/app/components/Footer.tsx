@@ -61,7 +61,7 @@ const Footer = () => {
         <div className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-gray-300 pt-8">
           {/* About Section */}
           <div className="space-y-4 text-center md:text-left">
-            <h2 className="text-3xl font-bold text-gray-900">AbReads</h2>
+            <h2 className="text-3xl font-bold text-green-900">ABreads</h2>
             <p className="text-gray-700">Discover your next favorite book and enjoy exclusive discounts.</p>
             <nav>
               <ul className="flex flex-col space-y-3 items-center md:items-start">

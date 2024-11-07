@@ -3,8 +3,9 @@ import { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2022-11-15",
+  apiVersion: '2024-06-20', // Updated to the expected API version
 });
+
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
@@ -35,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       payment_status: session.payment_status,
       line_items: session.line_items?.data.map((item) => ({
         id: item.id,
-        description: item.description || item.price.product.name,
+        description: item.description || (typeof item.price?.product === 'object' && 'name' in item.price.product ? item.price.product.name : "Unknown Product"),
         quantity: item.quantity,
         amount_total: item.amount_total,
       })),

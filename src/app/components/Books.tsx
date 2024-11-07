@@ -1,56 +1,81 @@
-// components/Books.tsx
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import Image from 'next/image';
 
-interface Book {
+interface VolumeInfo {
   title: string;
-  authors: string[];
-  category: string;
+  authors?: string[];
+  publishedDate?: string;
+  description?: string;
+  imageLinks?: {
+    thumbnail?: string;
+  };
 }
 
-const Books: React.FC<{ selectedCategory: string | null }> = ({ selectedCategory }) => {
+interface Book {
+  id: string;
+  volumeInfo: VolumeInfo;
+}
+
+const Books: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchBooks = async () => {
-      setLoading(true);
-      const response = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=subject:${selectedCategory}&key=${process.env.NEXT_PUBLIC_GOOGLE_BOOKS_API_KEY}`
-      );
-      const data = await response.json();
-      const fetchedBooks = data.items.map((item: any) => ({
-        title: item.volumeInfo.title,
-        authors: item.volumeInfo.authors || [],
-        category: selectedCategory || 'General',
-      }));
-      setBooks(fetchedBooks);
-      setLoading(false);
+      try {
+        const response = await axios.get<{ items: Book[] }>('/api/books');
+        const fetchedBooks = response.data.items.map(item => ({
+          id: item.id,
+          volumeInfo: {
+            title: item.volumeInfo.title,
+            authors: item.volumeInfo.authors,
+            publishedDate: item.volumeInfo.publishedDate,
+            description: item.volumeInfo.description,
+            imageLinks: {
+              thumbnail: item.volumeInfo.imageLinks?.thumbnail,
+            },
+          },
+        }));
+        setBooks(fetchedBooks);
+      } catch (err) {
+        setError('Failed to fetch books');
+        console.error(err);
+      }
     };
 
-    if (selectedCategory) {
-      fetchBooks();
-    }
-  }, [selectedCategory]);
-
-  if (loading) return <p>Loading books...</p>;
+    fetchBooks();
+  }, []);
 
   return (
-    <div className="bg-gray-100 p-4">
-      <h2 className="text-xl font-bold mb-4">Books in {selectedCategory}</h2>
-      <div className="grid grid-cols-2 gap-4">
-        {books.map((book, index) => (
-          <div key={index} className="p-4 bg-white rounded-lg shadow-md">
-            <h3 className="font-semibold">{book.title}</h3>
-            <p>{book.authors.join(', ')}</p>
-          </div>
-        ))}
-      </div>
+    <div>
+      {error && <p>{error}</p>}
+      {books.map((book) => (
+        <div key={book.id} className="book-card">
+          <h2>{book.volumeInfo.title}</h2>
+          {book.volumeInfo.authors && (
+            <p>By: {book.volumeInfo.authors.join(', ')}</p>
+          )}
+          {book.volumeInfo.publishedDate && (
+            <p>Published: {book.volumeInfo.publishedDate}</p>
+          )}
+          {book.volumeInfo.imageLinks?.thumbnail ? (
+            <Image
+              src={book.volumeInfo.imageLinks.thumbnail}
+              alt={book.volumeInfo.title}
+              width={128}
+              height={192}
+              layout="fixed"
+              priority
+            />
+          ) : (
+            <p>No image available</p>
+          )}
+          <p>{book.volumeInfo.description}</p>
+        </div>
+      ))}
     </div>
   );
 };
 
 export default Books;
-
-
-
-

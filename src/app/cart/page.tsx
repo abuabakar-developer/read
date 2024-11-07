@@ -1,9 +1,8 @@
-// app/cart/page.tsx
-
 "use client";
 
 import { useCart } from "@/app/context/CartContext";
 import CheckoutButton from "@/app/components/CheckoutButton";
+import Image from "next/image";
 
 interface CartItem {
   id: string;
@@ -23,12 +22,11 @@ export default function CartPage() {
     );
   }
 
-  // Prepare cart items for the CheckoutButton component
   const cartItems = cart.map((item: CartItem) => ({
     name: item.title,
     image: item.cover_url,
     price: item.price,
-    quantity: 1, // Assuming each item has a quantity of 1
+    quantity: 1,
   }));
 
   return (
@@ -42,10 +40,12 @@ export default function CartPage() {
             className="flex flex-col bg-white shadow-md p-4 rounded-lg transition-transform duration-200 ease-in-out hover:shadow-lg hover:-translate-y-1"
           >
             <div className="flex items-center space-x-4">
-              <img
+              <Image
                 src={item.cover_url}
                 alt={item.title}
-                className="w-20 h-20 object-cover rounded-lg transform hover:scale-105 transition-all duration-200"
+                width={80}
+                height={80}
+                className="object-cover rounded-lg transform hover:scale-105 transition-all duration-200"
               />
               <div className="flex-1">
                 <h2 className="text-lg font-medium text-gray-800 truncate">{item.title}</h2>
@@ -68,3 +68,6 @@ export default function CartPage() {
     </div>
   );
 }
+
+
+

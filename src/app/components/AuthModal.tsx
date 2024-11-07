@@ -52,7 +52,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }
       <div className="bg-gray-50 p-8 rounded-lg shadow-2xl w-11/12 sm:w-96 relative transform scale-95 hover:scale-100 transition-transform duration-300 ease-in-out">
         {/* Branding */}
         <h1 className="text-4xl font-extrabold text-green-700 text-center mb-1 tracking-wide font-serif">
-          abReads
+          ABreads
         </h1>
 
         {/* Title and subheading */}

@@ -2,7 +2,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { AiOutlineSearch, AiOutlineShoppingCart, AiOutlineUser, AiOutlineHeart, AiOutlineDown, AiOutlineMenu, AiOutlineClose, AiOutlineHistory, AiOutlineLogout} from 'react-icons/ai';
+import { AiOutlineSearch, AiOutlineShoppingCart, AiOutlineUser, AiOutlineHeart, AiOutlineDown, AiOutlineClose, AiOutlineHistory, AiOutlineLogout} from 'react-icons/ai';
 import AuthModal from './AuthModal'; // Ensure this path is correct
 import { useRouter } from 'next/navigation';
 import { useCart } from '../context/CartContext';
@@ -122,8 +122,8 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, onCategorySelect }) => {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             
-    <Link href="/" className="text-gray-900 text-2xl font-bold tracking-wide ml-6 hover:text-green-500">
-    AbReads
+    <Link href="/" className="text-green-900 text-4xl font-bold tracking-wide ml-6 hover:text-green-500 font-cinzel">
+    ABreads
     </Link>
   
 
@@ -188,19 +188,18 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, onCategorySelect }) => {
               )}
               {/* Wishlist */}
               <button
-                onClick={handleViewWishlist}
-                className="relative py-1 px-4 group transition-colors duration-300 rounded-r-xl"
-              >
-                <span className="group-hover:text-green-600 text-gray-700 flex items-center">
-                  <AiOutlineHeart className="mr-1" />
-                  Wishlist
-                  {wishlistCount > 0 && (
-                    <span className="absolute top-0 right-0 bg-green-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-sm">
-                      {wishlistCount}
-                    </span>
-                  )}
-                </span>
-              </button>
+       onClick={handleViewWishlist}
+       className="relative py-1 px-4 group transition-colors duration-300 rounded-r-xl"
+    >
+       <span className="group-hover:text-green-600 text-gray-700 flex items-center relative">
+       <AiOutlineHeart className="mr-1 text-2xl" /> {/* Increased icon size */}
+       {wishlistCount > 0 && (
+       <span className="absolute -top-2 -right-2 bg-green-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+        {wishlistCount}
+        </span>
+       )}
+          </span>
+           </button>
             </div>
           </div>
         </div>
@@ -382,9 +381,6 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, onCategorySelect }) => {
    };
 
 export default Navbar;
-
-
-
 
 
 

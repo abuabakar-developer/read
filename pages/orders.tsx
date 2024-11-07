@@ -1,8 +1,20 @@
 // pages/orders.tsx
 import { useEffect, useState } from 'react';
 
+interface OrderItem {
+  id: string;
+  description: string;
+  quantity: number;
+}
+
+interface Order {
+  id: string;
+  amount_total: number;
+  items: OrderItem[];
+}
+
 const OrdersPage = () => {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,7 +44,7 @@ const OrdersPage = () => {
             <p><strong>Order ID:</strong> {order.id}</p>
             <p><strong>Total Amount:</strong> ${(order.amount_total / 100).toFixed(2)}</p>
             <ul className="mt-2">
-              {order.items.map((item: any) => (
+              {order.items.map((item: OrderItem) => (
                 <li key={item.id}>
                   {item.description} - Qty: {item.quantity}
                 </li>
@@ -46,7 +58,6 @@ const OrdersPage = () => {
 };
 
 export default OrdersPage;
-
 
 
 

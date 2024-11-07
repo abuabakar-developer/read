@@ -3,10 +3,18 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { ChevronRightIcon, ChevronLeftIcon } from '@heroicons/react/24/solid';
+import Image from 'next/image';
+
+interface Book {
+  id: string;
+  cover_url: string;
+  title: string;
+  author_name: string[];
+}
 
 export default function WishlistPage() {
-  const [wishlist, setWishlist] = useState([]);
-  const scrollRef = useRef(null);
+  const [wishlist, setWishlist] = useState<Book[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeftScroll, setShowLeftScroll] = useState(false);
   const [showRightScroll, setShowRightScroll] = useState(false);
 
@@ -15,29 +23,26 @@ export default function WishlistPage() {
     setWishlist(storedWishlist);
   }, []);
 
-  const handleScroll = (e) => {
+  const handleScroll = (e: React.WheelEvent) => {
     if (scrollRef.current) {
-      e.preventDefault(); 
+      e.preventDefault();
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
       
-      // Calculate the amount to scroll horizontally
-      const scrollAmount = e.deltaY > 0 ? 300 : -300; // Scroll right on down scroll, left on up scroll
+      const scrollAmount = e.deltaY > 0 ? 300 : -300;
 
-      // Scroll horizontally
       scrollRef.current.scrollBy({
         left: scrollAmount,
         behavior: 'smooth',
       });
 
-    
       setShowLeftScroll(scrollLeft > 0);
       setShowRightScroll(scrollLeft < scrollWidth - clientWidth);
     }
   };
 
-  const scroll = (direction) => {
+  const scroll = (direction: 'left' | 'right') => {
     const scrollAmount = 300; 
-    scrollRef.current.scrollBy({
+    scrollRef.current?.scrollBy({
       top: 0,
       left: direction === 'right' ? scrollAmount : -scrollAmount,
       behavior: 'smooth',
@@ -51,7 +56,7 @@ export default function WishlistPage() {
     };
   }, []);
 
-  const removeFromWishlist = (id) => {
+  const removeFromWishlist = (id: string) => {
     const updatedWishlist = wishlist.filter(book => book.id !== id);
     setWishlist(updatedWishlist);
     localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
@@ -107,13 +112,15 @@ export default function WishlistPage() {
             key={book.id}
             className="flex-none w-72 border border-gray-300 rounded-lg p-4 shadow-lg hover:shadow-xl transition transform hover:-translate-y-2 duration-300 bg-white"
           >
-            <img
+            <Image
               src={book.cover_url}
               alt={book.title}
+              width={500}
+              height={300}
               className="w-full h-80 object-cover mb-4 rounded-lg"
             />
             <h2 className="text-xl font-semibold text-gray-800 truncate">{book.title}</h2>
-            <p className="text-gray-600">{book.author_name.join(', ')}</p>
+            <p className="text-gray-600">{book.author_name?.join(', ') || 'Unknown Author'}</p>
             <div className="flex justify-between items-center mt-4">
               <Link href={`/book/${book.id}`}>
                 <button className="px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition duration-300 w-full">
@@ -133,9 +140,6 @@ export default function WishlistPage() {
     </div>
   );
 }
-
-
-
 
 
 

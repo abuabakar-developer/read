@@ -1,9 +1,11 @@
 import { useState } from "react";
+import StarRating from "./StarRating";
 
 interface Review {
   id: string;
-  content: string;
+  content: string; // Text of the review
   author: string;
+  comment: string;
   rating: number;
 }
 
@@ -63,6 +65,20 @@ export default function ReviewModal({ onClose, reviews = [], bookId }: ReviewMod
       <div className="bg-white p-8 rounded-lg shadow-2xl w-[90%] max-w-2xl transform transition-transform hover:scale-105">
         <h2 className="text-3xl font-bold text-gray-900 mb-4">Write Your Review</h2>
 
+        <div className="reviews-section">
+          <h2 className="text-xl font-semibold mb-2">Reviews:</h2>
+          {reviews.length > 0 ? (
+            reviews.map((review, index) => (
+              <div key={index} className="review-item mb-4 p-4 border border-gray-200 rounded-md">
+                <p className="text-gray-800">{review.content}</p> {/* Changed text to content */}
+                <StarRating rating={review.rating} />
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500">No reviews yet.</p>
+          )}
+        </div>
+
         {/* Tips for Reviewers */}
         <div className="mb-6">
           <button
@@ -95,7 +111,6 @@ export default function ReviewModal({ onClose, reviews = [], bookId }: ReviewMod
 
         {/* Review Form */}
         <div className="space-y-6 mb-4">
-          {/* Title Input */}
           <input
             type="text"
             className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -104,7 +119,6 @@ export default function ReviewModal({ onClose, reviews = [], bookId }: ReviewMod
             onChange={(e) => setReviewTitle(e.target.value)}
           />
 
-          {/* Rating Stars */}
           <div className="flex items-center space-x-2 mb-4">
             <span className="text-gray-700 font-semibold">Rate this item:</span>
             <div className="flex space-x-1">
@@ -122,7 +136,6 @@ export default function ReviewModal({ onClose, reviews = [], bookId }: ReviewMod
             </div>
           </div>
 
-          {/* Review Content */}
           <textarea
             className="w-full p-4 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Write your review here (e.g., 'I really enjoyed the character development...')"
@@ -149,7 +162,7 @@ export default function ReviewModal({ onClose, reviews = [], bookId }: ReviewMod
             )}
           </button>
           <button
-            className="px-6 py-3 bg-gray-400 text-gray-800 rounded-lg hover:bg-gray-500 transition-all duration-300"
+            className="px-6 py-3 bg-green-400 text-gray-800 rounded-lg hover:bg-green-500 transition-all duration-300"
             onClick={onClose}
           >
             Close
@@ -159,10 +172,6 @@ export default function ReviewModal({ onClose, reviews = [], bookId }: ReviewMod
     </div>
   );
 }
-
-
-
-
 
 
 
