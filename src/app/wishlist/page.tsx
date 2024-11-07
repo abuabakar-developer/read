@@ -23,38 +23,54 @@ export default function WishlistPage() {
     setWishlist(storedWishlist);
   }, []);
 
-  const handleScroll = (e: React.WheelEvent) => {
+  const handleScroll = () => {
     if (scrollRef.current) {
-      e.preventDefault();
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      
-      const scrollAmount = e.deltaY > 0 ? 300 : -300;
-
-      scrollRef.current.scrollBy({
-        left: scrollAmount,
-        behavior: 'smooth',
-      });
-
       setShowLeftScroll(scrollLeft > 0);
       setShowRightScroll(scrollLeft < scrollWidth - clientWidth);
     }
   };
 
   const scroll = (direction: 'left' | 'right') => {
-    const scrollAmount = 300; 
-    scrollRef.current?.scrollBy({
-      top: 0,
-      left: direction === 'right' ? scrollAmount : -scrollAmount,
-      behavior: 'smooth',
-    });
+    const scrollAmount = 300;
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({
+        top: 0,
+        left: direction === 'right' ? scrollAmount : -scrollAmount,
+        behavior: 'smooth',
+      });
+    }
   };
 
   useEffect(() => {
-    window.addEventListener('wheel', handleScroll, { passive: false });
+    const handleWheelScroll = (e: WheelEvent) => {
+      if (scrollRef.current) {
+        // Prevent vertical scrolling
+        if (e.deltaY !== 0) {
+          e.preventDefault();
+        }
+
+        // Allow horizontal scrolling only
+        const scrollAmount = e.deltaY > 0 ? 300 : -300;
+        scrollRef.current.scrollBy({
+          left: scrollAmount,
+          behavior: 'smooth',
+        });
+        handleScroll();
+      }
+    };
+
+    const currentScrollRef = scrollRef.current;
+    currentScrollRef?.addEventListener('wheel', handleWheelScroll, { passive: false });
+
     return () => {
-      window.removeEventListener('wheel', handleScroll);
+      currentScrollRef?.removeEventListener('wheel', handleWheelScroll);
     };
   }, []);
+
+  useEffect(() => {
+    handleScroll();
+  }, [wishlist]);
 
   const removeFromWishlist = (id: string) => {
     const updatedWishlist = wishlist.filter(book => book.id !== id);
@@ -99,13 +115,14 @@ export default function WishlistPage() {
           className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full shadow-lg p-2 hover:bg-gray-200 transition duration-300"
           onClick={() => scroll('right')}
         >
-            <ChevronRightIcon className="h-8 w-8" />
+          <ChevronRightIcon className="h-8 w-8" />
         </button>
       )}
 
       <div
         ref={scrollRef}
         className="flex space-x-6 overflow-x-auto py-4 scrollbar-hide h-full"
+        onScroll={handleScroll}
       >
         {wishlist.map((book) => (
           <div
@@ -140,6 +157,7 @@ export default function WishlistPage() {
     </div>
   );
 }
+
 
 
 

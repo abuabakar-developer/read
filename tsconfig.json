@@ -21,6 +21,15 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "next.config.mjs", "src/app/components/WishlistButton"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "next.config.mjs",
+    "src/app/components/WishlistButton",
+    "src/global.d.ts"  // Add this line to ensure TypeScript is aware of global.d.ts
+  ],
   "exclude": ["node_modules"]
 }
+

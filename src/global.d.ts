@@ -1,12 +1,14 @@
-// src/types/global.d.ts
+// src/global.d.ts
+
+import mongoose from 'mongoose';
 
 declare global {
-  namespace NodeJS {
-    interface Global {
-      mongoose: { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null };
-    }
-  }
+  var mongoose: {
+    conn: mongoose.Connection | null;
+    promise: Promise<mongoose.Connection> | null;
+  } | undefined;
 }
 
-export {};
+export {}; // Ensures the file is treated as a module
+
 

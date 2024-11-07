@@ -1,8 +1,7 @@
 
-  
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 'use client';
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Bestsellers from "@/app/components/Bestsellers";
 import ReviewModal from "@/app/components/ReviewModal"; 
@@ -64,6 +63,7 @@ export default function BookDetails() {
       loadWishlist();
     }
   }, [id]);
+  
 
   interface Book {
     id: string;
@@ -108,7 +108,7 @@ export default function BookDetails() {
   }
 
   
-  const mapBookData = (data: BookData): Book => ({
+  const mapBookData = useCallback((data: BookData): Book => ({
     id: data.id,
     title: data.volumeInfo.title,
     description: data.volumeInfo.description || "No description available.",
@@ -118,15 +118,21 @@ export default function BookDetails() {
     price: data.saleInfo?.listPrice?.amount || 0, 
     discounted_price: data.saleInfo?.listPrice?.amount || 0, 
     pages: (data.volumeInfo as { pageCount?: number }).pageCount ?? 0, 
-  });
+  }), []);  // Empty dependency array because it doesn't depend on anything
   
-
-  const calculateAverageRating = (reviews: Review[]) => {
+  // Memoize the calculateAverageRating function
+  const calculateAverageRating = useCallback((reviews: Review[]) => {
     const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
     const avgRating = reviews.length ? totalRating / reviews.length : 0;
-    setAverageRating(avgRating);
-  };
+    setAverageRating(avgRating); // Assuming setAverageRating is coming from useState
+  }, []);
           
+  useEffect(() => {
+    // Your logic that depends on calculateAverageRating and mapBookData
+  }, [calculateAverageRating, mapBookData]);
+
+
+
   
   const loadWishlist = () => {
     const storedWishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');

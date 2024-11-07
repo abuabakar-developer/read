@@ -1,21 +1,21 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import dbConnect from '@/app/utils/dbConnect';
+import mongoose from 'mongoose';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     const books = req.body;
 
     try {
-      // Ensure MongoDB connection
-      const client = await dbConnect();
+      // Ensure MongoDB connection through Mongoose
+      await dbConnect();
 
-      // Check if client is null or undefined
-      if (!client) {
+      // Access the database using Mongoose connection
+      const db = mongoose.connection.db;
+
+      if (!db) {
         return res.status(500).json({ error: 'Failed to connect to MongoDB' });
       }
-
-      // Access the database using the client
-      const db = client.db(); 
 
       // Insert books into the database
       const result = await db.collection('books').insertMany(books);
@@ -30,4 +30,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }
+
 

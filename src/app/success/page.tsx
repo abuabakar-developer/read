@@ -1,8 +1,7 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-// Define TypeScript interfaces
 interface LineItem {
   id: string;
   description: string;
@@ -18,16 +17,14 @@ interface OrderDetails {
   };
 }
 
-const SuccessPage = () => {
+const SuccessPageContent = () => {
   const searchParams = useSearchParams();
   const session_id = searchParams?.get('session_id');
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const router = useRouter();
 
-  // Prevent scrolling on page load
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { 
@@ -35,7 +32,6 @@ const SuccessPage = () => {
     };
   }, []);
 
-  // Fetch order details and save to history
   useEffect(() => {
     if (session_id) {
       const fetchAndSaveOrder = async () => {
@@ -47,32 +43,25 @@ const SuccessPage = () => {
           setOrderDetails(data);
           setOrderConfirmed(true);
 
-          // Save order to history
           await fetch('/api/save-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...data, userId: 'sampleUserId' }),
           });
-        } catch (error) {
-          setError('Unable to load order details');
+        } catch {
+          setLoading(false);
         } finally {
           setLoading(false);
         }
       };
       fetchAndSaveOrder();
     } else {
-      setError('Session ID is missing');
       setLoading(false);
     }
   }, [session_id]);
 
-  // Render loading state
   if (loading) return <p className="text-lg text-gray-700">Loading order details...</p>;
 
-  // Render error state
-  if (error) return <p className="text-red-600">{error}</p>;
-
-  // Render success page
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50">
       <div className="min-h-screen flex flex-col items-center justify-center mt-16 pt-16 p-4">
@@ -117,4 +106,11 @@ const SuccessPage = () => {
   );
 };
 
+const SuccessPage = () => (
+  <Suspense fallback={<p className="text-lg text-gray-700">Loading order details...</p>}>
+    <SuccessPageContent />
+  </Suspense>
+);
+
 export default SuccessPage;
+
