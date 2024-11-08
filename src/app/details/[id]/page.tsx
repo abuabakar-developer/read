@@ -27,7 +27,8 @@ export default function BookDetails() {
   const [isOpen, setIsOpen] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const { addToCart } = useCart();
-  
+
+
   useEffect(() => {
     const fetchBookDetails = async (bookId: string) => {
       try {
@@ -115,8 +116,8 @@ export default function BookDetails() {
     cover_url: data.volumeInfo.imageLinks?.thumbnail || "default-cover-url.jpg", 
     author_name: data.volumeInfo.authors || ["Unknown Author"],    
     published_year: parseInt(data.volumeInfo.publishedDate?.split("-")[0] || "0", 10),
-    price: data.saleInfo?.listPrice?.amount || 0, 
-    discounted_price: data.saleInfo?.listPrice?.amount || 0, 
+    price: data.saleInfo?.listPrice?.amount || 19, 
+    discounted_price: data.saleInfo?.listPrice?.amount || 25, 
     pages: (data.volumeInfo as { pageCount?: number }).pageCount ?? 0, 
   }), []);  // Empty dependency array because it doesn't depend on anything
   
@@ -298,83 +299,104 @@ export default function BookDetails() {
             </p>
           </div>
 
- <div className="bg-white border border-gray-200 mt-6 pt-6 px-6 pb-6 rounded-3xl shadow-xl transition duration-300 transform hover:scale-105 hover:shadow-2xl hover:-translate-y-2">
-  {/* Star Rating Section */}
-  <p className="flex items-center justify-center lg:justify-start mb-6">
-    <span className="text-yellow-400 mr-2">
-      <StarRating rating={averageRating} />
-    </span>
-    <span className="font-semibold text-gray-900 text-xl lg:text-3xl">
-      {averageRating.toFixed(1)} out of 5
-    </span>
-    <span className="ml-3 text-gray-500 text-sm lg:text-lg">
-      ({totalReviews} reviews)
-    </span>
-  </p>
 
-  {/* Write a Review Button */}
-  <button
-    className="bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-700 text-white px-8 py-3 mt-6 rounded-full hover:from-indigo-600 hover:to-purple-800 transform hover:scale-110 transition-all duration-500 shadow-md focus:outline-none focus:ring-4 focus:ring-indigo-300"
-    onClick={() => setReviewModalOpen(true)}
-  >
-    Write a Review
-  </button>
 
-  {/* Review Modal */}
-  {isReviewModalOpen && <ReviewModal bookId={id} onClose={() => setReviewModalOpen(false)}   reviews={reviews as Review[]}/>}
 
-  {reviews.map((review) => (
-  <div key={review.id}>
-    <p>{review.comment}</p>
-    <p>Rating: {review.rating}</p>
-  </div>
-))}
-
-  {/* Pricing Section */}
-  <div className="flex flex-col mt-6 pt-4 border-t border-gray-300 lg:flex-row lg:items-center lg:justify-between">
-    <p className="text-4xl font-extrabold text-gray-900 mb-4 lg:mb-0">
-      ${book.discounted_price}
-      <span className="line-through text-gray-400 ml-3 text-2xl">
-        ${book.price}
+          <div className="bg-white border border-gray-200 mt-6 pt-6 px-6 pb-6 rounded-3xl shadow-xl transition duration-300 transform hover:scale-105 hover:shadow-2xl hover:-translate-y-2">
+  {/* Star Rating and Review Section */}
+  <div className="flex flex-col items-center lg:items-start mb-6">
+    <p className="flex items-center justify-center lg:justify-start mb-3">
+      <span className="text-yellow-400 mr-2">
+        <StarRating rating={averageRating} />
+      </span>
+      <span className="font-semibold text-gray-900 text-xl lg:text-3xl">
+        {averageRating.toFixed(1)} out of 5
+      </span>
+      <span className="ml-3 text-gray-500 text-sm lg:text-lg">
+        ({totalReviews} reviews)
       </span>
     </p>
+
+    {/* Write a Review Button */}
+    <button
+      className="bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-700 text-white px-6 py-2 mt-4 rounded-full hover:from-indigo-600 hover:to-purple-800 transform hover:scale-105 transition-all duration-300 shadow focus:outline-none focus:ring-4 focus:ring-indigo-300"
+      onClick={() => setReviewModalOpen(true)}
+    >
+      Write a Review
+    </button>
   </div>
 
-  {/* Add to Cart Button */}
-  <button
-    className={`bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 mt-4 rounded-full transition-all transform hover:scale-110 shadow-md focus:outline-none focus:ring-4 focus:ring-emerald-300 ${
-      isAddedToCart ? "bg-gray-400 cursor-not-allowed" : "hover:from-emerald-600 hover:to-teal-700"
-    }`}
-    onClick={handleAddToCart}
-    disabled={isAddedToCart}
-  >
-    <span className="flex items-center justify-center">
-      <FaShoppingCart className="mr-2" /> 
-      {isAddedToCart ? "Added to Cart" : "Add to Cart"}
-    </span>
-  </button>
+  {/* Review Modal */}
+  {isReviewModalOpen && (
+    <ReviewModal
+      bookId={id}
+      onClose={() => setReviewModalOpen(false)}
+      reviews={reviews as Review[]}
+    />
+  )}
 
-  {/* Add to Wishlist Button */}
-  <button
-    onClick={addToWishlist}
-    className={`mt-6 px-6 py-3 rounded-full transition-all transform hover:scale-110 shadow-md focus:outline-none focus:ring-4 focus:ring-rose-300 ${
-      isAddedToWishlist
-        ? "bg-gray-400 cursor-not-allowed text-white"
-        : "bg-gradient-to-r from-rose-500 to-pink-600 text-white hover:from-rose-600 hover:to-pink-700"
-    }`}
-    disabled={isAddedToWishlist}
-  >
-    <span className="flex items-center justify-center">
-      <FaHeart className="inline-block mr-2" />
-      {isAddedToWishlist ? "Added to Wishlist" : "Add to Wishlist"}
-    </span>
-  </button>
- </div>
-          {wishlistMessage && (
-            <p className="text-green-800 mt-2">{wishlistMessage}</p>
-          )}
-        </div>
+  {/* Display Individual Reviews */}
+  <div className="mb-6 space-y-4">
+    {reviews.map((review) => (
+      <div key={review.id} className="border-t border-gray-200 pt-4">
+        <p className="text-gray-700">{review.comment}</p>
+        <p className="text-sm text-yellow-500 font-semibold">Rating: {review.rating}</p>
       </div>
+    ))}
+  </div>
+
+  {/* Price and Actions Section */}
+  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between border-t border-gray-300 pt-4 space-y-4 lg:space-y-0 lg:space-x-6">
+
+    {/* Pricing Section */}
+    <div className="text-center lg:text-left">
+      <p className="text-4xl font-extrabold text-gray-900">
+        ${book.discounted_price}
+        <span className="line-through text-gray-400 ml-3 text-2xl">
+          ${book.price}
+        </span>
+      </p>
+    </div>
+
+    {/* Add to Cart Button */}
+    <button
+      className={`w-full lg:w-auto bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 rounded-full transition-all transform hover:scale-105 shadow focus:outline-none focus:ring-4 focus:ring-emerald-300 ${
+        isAddedToCart ? "bg-gray-400 cursor-not-allowed" : "hover:from-emerald-600 hover:to-teal-700"
+      }`}
+      onClick={handleAddToCart}
+      disabled={isAddedToCart}
+    >
+      <span className="flex items-center justify-center">
+        <FaShoppingCart className="mr-2" />
+        {isAddedToCart ? "Added to Cart" : "Add to Cart"}
+      </span>
+    </button>
+
+    {/* Add to Wishlist Button */}
+    <button
+      onClick={addToWishlist}
+      className={`w-full lg:w-auto bg-gradient-to-r from-rose-500 to-pink-600 text-white px-6 py-3 rounded-full transition-all transform hover:scale-105 shadow focus:outline-none focus:ring-4 focus:ring-rose-300 ${
+        isAddedToWishlist ? "bg-gray-400 cursor-not-allowed" : "hover:from-rose-600 hover:to-pink-700"
+      }`}
+      disabled={isAddedToWishlist}
+    >
+      <span className="flex items-center justify-center">
+        <FaHeart className="mr-2" />
+        {isAddedToWishlist ? "Added to Wishlist" : "Add to Wishlist"}
+      </span>
+    </button>
+  </div>
+
+  {/* Wishlist Message */}
+  {wishlistMessage && (
+    <p className="text-green-800 mt-2 text-center lg:text-left">{wishlistMessage}</p>
+  )}
+</div>
+
+ </div> 
+</div>
+
+
       <div className="mt-14 p-6 bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100 rounded-lg shadow-md border-l-4 border-green-600">
       <div className="flex items-center justify-between border border-green-600 p-4 rounded-lg cursor-pointer" onClick={toggleSynopsis}>
         <h3 className="text-xl font-semibold text-green-800">Synopsis</h3>
