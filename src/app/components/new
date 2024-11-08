@@ -565,3 +565,178 @@ className="hidden lg:flex relative w-full max-w-lg"
 
 
 
+
+
+'use client';
+import './globals.css';
+import Navbar from './components/Navbar';
+import SessionProvider from './components/SessionProvider';
+import FeaturedBooks from './components/FeaturedBooks';
+import ExploreBooks from './components/ExploreBooks';
+import React, { useState } from 'react';
+import { CartProvider } from './context/CartContext';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+import { persistor, store } from '../app/redux/store';
+import { usePathname } from 'next/navigation'; 
+import Footer from './components/Footer';
+import Bestsellers from './components/Bestsellers';
+import HeroSection from './components/Hero';
+import ComingSoon from './components/ComingSoon';
+
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const pathname = usePathname();
+
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setSearchTerm(''); // Clear search term when a category is selected
+  };
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    setSelectedCategory(null); // Clear category when searching
+  };
+
+  const isDetailsPage = pathname?.startsWith('/details');
+
+  return (
+    <html lang="en">
+      <body>
+        <SessionProvider>
+          <CartProvider>
+              {!isDetailsPage && (
+                            <Provider store={store}>
+                            <PersistGate loading={null} persistor={persistor}>
+                              <div className="pb-14">
+                      <Navbar 
+                        onSearch={handleSearch} 
+                        onCategorySelect={handleCategorySelect} 
+                      />
+                      <main className="flex-grow">{children}</main>
+                    </div>
+                    <div className='pt-8 mt-8'>
+                      <HeroSection />
+                    </div>
+                    <div>
+                      <Bestsellers />
+                    </div>
+                    <div>
+                      <FeaturedBooks />
+                    </div>
+                    <div className='pt-4 mt-4'>
+                      <ComingSoon />
+                    </div>
+                    <div>
+                      <ExploreBooks category={selectedCategory} searchTerm={searchTerm} />
+                    </div>
+                    <div className='pt-6 mt-6'>
+                      <Footer />
+                    </div>
+                    </PersistGate>
+                    </Provider>
+              )}
+              {children}
+              </CartProvider>
+        </SessionProvider>
+      </body>
+    </html>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+updated code 
+
+<nav className="fixed w-full top-16 z-50 bg-white border-t border-gray-300 shadow-lg">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-2 flex justify-between items-center">
+    {/* Categories */}
+    <div className="flex items-center space-x-4">
+      <div className="relative lg:hidden">
+        <button
+          onClick={() => setIsCategoriesOpen((prev) => !prev)}
+          className="py-2 px-5 rounded-lg bg-gray-100 text-gray-900 font-semibold shadow-md transition-transform duration-200 ease-in-out hover:bg-green-500 hover:text-white hover:scale-105 flex items-center"
+        >
+          📚 <span className="ml-2">Categories</span>
+          <AiOutlineDown
+            className={ml-2 transform transition-transform duration-200 ${isCategoriesOpen ? 'rotate-180' : 'rotate-0'}}
+          />
+        </button>
+        {/* Categories dropdown */}
+        {isCategoriesOpen && (
+          <div className="absolute left-0 mt-2 py-2 w-56 bg-green-50 border border-green-200 shadow-xl rounded-md z-50 transition-opacity duration-300 ease-in-out">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => handleCategorySelect(category)}
+                className="block px-4 py-2 text-left text-gray-700 hover:bg-green-300 w-full transition-colors border-b"
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+{/* Categories visible on large screens */}
+<div className="hidden lg:flex space-x-6">
+  {categories.map((category, index) => (
+    <button
+      key={category}
+      onClick={() => handleCategorySelect(category)}
+      className={py-2 px-4 rounded-lg bg-transparent text-gray-900 font-semibold shadow-md transition-transform duration-200 ease-in-out hover:scale-105 
+        ${index !== categories.length - 1 ? 'border-r border-gray-300 hover:border-gray-500' : ''}}
+    >
+      {category}
+    </button>
+  ))}
+</div>
+ </div>
+
+{/* Search Bar - visible on smaller screens */}
+<form
+  onSubmit={handleSearch}
+  className="lg:hidden flex relative w-full max-w-lg"
+>
+  <div className="relative flex items-center w-full">
+    {/* Search Icon on the Left */}
+    <AiOutlineSearch className="absolute left-3 w-5 h-5 text-gray-400" />
+
+    {/* Search Input Field */}
+    <input
+      type="text"
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      placeholder="Search for books..."
+      className="w-full pl-12 pr-16 py-2 text-gray-800 bg-gray-50 border border-gray-300 rounded-none shadow-lg focus:outline-none focus:ring-4 focus:ring-green-300 focus:bg-white transition-all duration-300 ease-in-out hover:shadow-xl"
+    />
+
+    {/* Submit Button with Icon */}
+    <button
+      type="submit"
+      className="absolute right-0 h-full bg-green-600 text-white px-4 flex items-center justify-center shadow hover:bg-green-500 transition-transform duration-200 transform hover:scale-105 rounded-none"
+    >
+      <AiOutlineSearch className="w-5 h-5" />
+    </button>
+  </div>
+</form>
+  </div>
+</nav>
