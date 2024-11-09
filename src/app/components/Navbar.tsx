@@ -118,8 +118,6 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, onCategorySelect }) => {
              
       {/* Upper Navbar - visible on larger screens */}
 
-
-
 <nav className="bg-gray-50 overflow-hidden border-b border-green-300 fixed w-full top-0 z-50 shadow-md">
   <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
     <div className="flex justify-between items-center h-16">
@@ -191,8 +189,6 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, onCategorySelect }) => {
   </div>
 </nav>
 
-
-//lower navbar
 
       <nav className="fixed w-full top-16 z-50 bg-white border-t border-gray-300 shadow-lg">
   <div className="mx-width-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-2 flex justify-between items-center">
