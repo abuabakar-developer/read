@@ -117,12 +117,12 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, onCategorySelect }) => {
     <>
              
       {/* Upper Navbar - visible on larger screens */}
-      <nav className="bg-gray-50 border-b border-green-300 fixed w-full top-0 z-50 shadow-md">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+      <nav className="bg-gray-50 overflow-x-hidden border-b mx-width-auto border-green-300 fixed w-full top-0 z-50 shadow-md">
+        <div className="mx-width-auto px-4 sm:px-6 lg:px-8 xl:px-12">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             
-    <Link href="/" className="text-green-900 text-4xl font-bold tracking-wide ml-2 hover:text-green-500 font-cinzel">
+    <Link href="/" className="text-green-900 text-3xl font-bold tracking-wide ml-2 hover:text-green-500 font-cinzel lg:text-4xl">
     ABreads
     </Link>
             {/* Search Bar - visible on larger screens */}
@@ -203,10 +203,10 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, onCategorySelect }) => {
         </div>
       </nav>
 
-
+//lower navbar
 
       <nav className="fixed w-full top-16 z-50 bg-white border-t border-gray-300 shadow-lg">
-  <div className="mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-2 flex justify-between items-center">
+  <div className="mx-width-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-2 flex justify-between items-center">
     {/* Categories */}
     <div className="flex items-center space-x-4">
       <div className="relative lg:hidden">
@@ -214,7 +214,7 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, onCategorySelect }) => {
           onClick={() => setIsCategoriesOpen((prev) => !prev)}
           className="py-2 px-5 rounded-lg bg-gray-100 text-gray-900 font-semibold shadow-md transition-transform duration-200 ease-in-out hover:bg-green-500 hover:text-white hover:scale-105 flex items-center"
         >
-          📚 <span className="ml-2">All</span>
+          📚 <span>All</span>
           <AiOutlineDown
             className={`ml-2 transform transition-transform duration-200 ${isCategoriesOpen ? 'rotate-180' : 'rotate-0'}`}
           />
@@ -257,7 +257,7 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, onCategorySelect }) => {
 >
   <div className="relative flex items-center w-full">
     {/* Search Icon on the Left */}
-    <AiOutlineSearch className="absolute left-3 w-5 h-5 text-gray-400" />
+    <AiOutlineSearch className="absolute left-2 mx-width-auto text-gray-400" />
 
     {/* Search Input Field */}
     <input
