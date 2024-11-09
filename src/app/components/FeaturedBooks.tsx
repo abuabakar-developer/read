@@ -58,9 +58,10 @@ export default function FeaturedBooks() {
 
   return (
     <section id="featured" className="my-12 px-4 lg:px-12 py-6 bg-white text-gray-800">
-      <h2 className="text-5xl font-extrabold tracking-tighter text-left mb-6 font-serif text-gray-900 leading-tight">
-        Signed $ <span className="text-gray-600">Special Editions</span>
-      </h2>
+<h2 className="text-3xl sm:text-5xl font-extrabold tracking-tighter text-left mb-6 font-serif text-gray-900 leading-tight">
+  Signed $ <span className="text-gray-600">Special Editions</span>
+</h2>
+
 
       {isLoading ? (
         <div className="flex justify-center items-center py-10">

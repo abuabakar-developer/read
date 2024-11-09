@@ -66,7 +66,7 @@ const ComingSoon = () => {
   if (loading) {
     return (
       <section className="my-12 px-4 lg:py-10 bg-white text-gray-800">
-        <h2 className="text-5xl font-extrabold tracking-tighter text-left mb-6 font-serif text-gray-600 leading-tight">
+            <h2 className="text-5xl font-extrabold tracking-tighter text-left mb-6 font-serif text-gray-600 leading-tight">
           Coming <span className="text-gray-600">Soon</span>
         </h2>
         <div className="flex space-x-6 overflow-x-auto py-6 scrollbar-hide">
@@ -87,10 +87,9 @@ const ComingSoon = () => {
 
   return (
     <section className="my-12 px-4 lg:px-12 py-6 bg-white text-gray-800">
-      <h2 className="text-5xl font-extrabold tracking-tighter text-left mb-6 font-serif text-gray-900 leading-tight">
-        Exciting New Release <span className="text-gray-600">Coming Soon</span>
-      </h2>
-
+<h2 className="text-3xl sm:text-5xl font-extrabold tracking-tighter text-left mb-6 font-serif text-gray-900 leading-tight">
+  Exciting New Release <span className="text-gray-600">Coming Soon</span>
+</h2>
       <div className="relative flex items-center justify-center mt-6">
         <button
           className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-green-600 text-white p-3 rounded-full focus:outline-none z-10 transition-transform duration-300 ease-in-out hover:scale-110 hover:bg-green-700"

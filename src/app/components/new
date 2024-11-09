@@ -1130,3 +1130,309 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, onCategorySelect }) => {
 
 export default Navbar;
 
+
+
+
+
+
+import Image from 'next/image';
+import Link from 'next/link';
+
+interface Book {
+  id: string;
+  title: string;
+  author: string; // Added the author field for display
+  cover_url: string;
+}
+
+interface BookCardProps {
+  book: Book;
+}
+
+const BookCard: React.FC<BookCardProps> = ({ book }) => {
+  return (
+    <div className="relative max-w-full sm:max-w-xs bg-white bg-opacity-80 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:-translate-y-2 overflow-hidden border border-gray-200 hover:border-gray-400">
+      <Link href={`/details/${book.id}`} className="block group">
+        {/* Book Cover Section */}
+        <div className="h-64 relative overflow-hidden rounded-t-xl">
+          <Image
+            src={book.cover_url}
+            alt={book.title}
+            layout="fill"
+            objectFit="cover"
+            className="transition-transform duration-700 ease-out group-hover:scale-105 group-hover:brightness-90"
+          />
+        </div>
+
+        {/* Book Title and Author Section */}
+        <div className="p-4 text-center">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 truncate transition-colors duration-300 group-hover:text-indigo-500">
+            {book.title}
+          </h3>
+          <p className="text-sm sm:text-md text-gray-600 group-hover:text-gray-700 transition-colors duration-300">
+            {book.author}
+          </p>
+        </div>
+      </Link>
+
+      {/* "View Details" Button (Appears on Hover) */}
+      <div className="absolute inset-0 bg-gradient-to-t from-gray-800 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-in-out flex flex-col justify-end p-4">
+        <div className="flex justify-center space-x-4">
+          <Link href={`/details/${book.id}`}>
+            <button className="bg-gray-100 hover:bg-gray-200 text-gray-800 hover:text-gray-900 text-sm font-semibold py-2 px-6 rounded-full shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105">
+              View Details
+            </button>
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default BookCard;
+
+
+
+
+
+
+
+
+
+import { useEffect, useState, useMemo } from 'react';
+import BookCard from './BookCard';
+import Pagination from './Pagination';
+import Skeleton from './Skeleton';
+
+interface Book {
+  id: string;
+  volumeInfo: {
+    title: string;
+    imageLinks?: {
+      thumbnail: string;
+    };
+    authors?: string[]; // Add authors as an optional property
+  };
+}
+
+interface ExploreBooksProps {
+  category: string | null;
+  searchTerm: string;
+}
+
+const ExploreBooks: React.FC<ExploreBooksProps> = ({ category, searchTerm }) => {
+  const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+
+  useEffect(() => {
+    const fetchBooks = async () => {
+      setLoading(true);
+      try {
+        const query = category
+          ? `category=${category}`
+          : searchTerm
+          ? `title=${searchTerm}`
+          : 'bestsellers';
+
+        const response = await fetch(`/api/books?${query}&page=${currentPage}&limit=12`);
+        const data = await response.json();
+
+        setBooks(data.items ?? []);
+        setTotalPages(Math.ceil(data.totalItems / 12));
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching books:', error);
+        setError('Failed to load books');
+        setLoading(false);
+      }
+    };
+
+    fetchBooks();
+  }, [category, searchTerm, currentPage]);
+
+  useEffect(() => {
+    const exploreBooksSection = document.getElementById('explore-books');
+    if (exploreBooksSection) {
+      exploreBooksSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [currentPage]);
+
+  const cachedBooks = useMemo(() => books, [books]);
+
+  if (loading) {
+    return (
+      <section className="my-12 px-4 lg:px-12 py-6 bg-white text-gray-800">
+        <Skeleton count={12} />
+      </section>
+    );
+  }
+
+  if (error) {
+    return <div className="text-center mt-20 text-red-500">{error}</div>;
+  }
+
+  return (
+    <section id="explore-books" className="my-12 px-4 lg:px-12 py-6 bg-white text-gray-800">
+      <h2 className="text-5xl font-extrabold tracking-tighter text-left mb-6 font-serif text-gray-900 leading-tight">
+        {category ? `${category} Books 2025` : searchTerm ? `Results for "${searchTerm}"` : 'Explore Popular Books'}
+      </h2>
+
+      <p className="text-lg lg:text-xl text-gray-600 mb-6 text-left leading-relaxed">
+        {category || searchTerm ? 'Discover top-rated books.' : 'Check out the most popular books right now.'}
+      </p>
+
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
+        {cachedBooks.length > 0 ? (
+          cachedBooks.map((book) => (
+            <div key={book.id} className="min-w-[220px] max-w-[220px] group relative transform transition-transform duration-300 hover:scale-105 rounded-lg overflow-hidden">
+              <BookCard
+                book={{
+                  id: book.id,
+                  title: book.volumeInfo.title,
+                  cover_url: book.volumeInfo.imageLinks?.thumbnail || '/default-book-cover.jpg',
+                  author: book.volumeInfo.authors?.join(', ') || 'Unknown Author', // Include the author
+                }}
+              />
+            </div>
+          ))
+        ) : (
+          <p className="text-center text-gray-500 col-span-full">No books found.</p>
+        )}
+      </div>
+
+      <div className="flex justify-center mt-12">
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+      </div>
+    </section>
+  );
+};
+
+export default ExploreBooks;
+
+
+
+ 
+
+
+
+
+
+ 'use client';
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+
+interface LineItem {
+  id: string;
+  description: string;
+  quantity: number;
+  amount_total: number;
+}
+
+interface OrderDetails {
+  id: string;
+  amount_total: number;
+  line_items: {
+    data: LineItem[];
+  };
+}
+
+const SuccessPageContent = () => {
+  const searchParams = useSearchParams();
+  const session_id = searchParams?.get('session_id');
+  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [orderConfirmed, setOrderConfirmed] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { 
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
+  useEffect(() => {
+    if (session_id) {
+      const fetchAndSaveOrder = async () => {
+        try {
+          const response = await fetch(`/api/get-order-details?session_id=${session_id}`);
+          if (!response.ok) throw new Error('Failed to fetch order details');
+          
+          const data: OrderDetails = await response.json();
+          setOrderDetails(data);
+          setOrderConfirmed(true);
+
+          await fetch('/api/save-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...data, userId: 'sampleUserId' }),
+          });
+        } catch {
+          setLoading(false);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchAndSaveOrder();
+    } else {
+      setLoading(false);
+    }
+  }, [session_id]);
+
+  if (loading) return <p className="text-lg text-gray-700">Loading order details...</p>;
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50">
+      <div className="min-h-screen flex flex-col items-center justify-center mt-16 pt-16 p-4">
+        <div className="bg-white shadow-lg p-8 rounded-lg max-w-3xl w-full sm:w-11/12 md:w-3/4 lg:w-full transition transform hover:scale-105">
+          <h1 className="text-4xl font-bold mb-6 text-center text-green-600">Order Success!</h1>
+          {orderConfirmed && (
+            <p className="text-lg text-green-500 mb-4">Your order has been confirmed!</p>
+          )}
+          {orderDetails ? (
+            <div>
+              <h2 className="text-2xl font-semibold mb-4">Thank you for your order!</h2>
+              <div className="border-t border-gray-200 my-4" />
+              <p className="text-lg mb-2"><strong>Order ID:</strong> {orderDetails.id}</p>
+              <p className="text-lg mb-4"><strong>Amount Paid:</strong> ${(orderDetails.amount_total / 100).toFixed(2)}</p>
+              <h3 className="text-xl font-semibold mb-2">Order Details:</h3>
+              <ul className="space-y-4">
+                {orderDetails.line_items?.data?.map((item: LineItem) => (
+                  <li key={item.id} className="flex justify-between items-center bg-gray-50 p-4 rounded-md shadow-sm transition hover:bg-gray-100">
+                    <div>
+                      <p className="font-medium">{item.description}</p>
+                      <p className="text-sm text-gray-500"><strong>Quantity:</strong> {item.quantity}</p>
+                    </div>
+                    <p className="text-lg font-semibold">${(item.amount_total / 100).toFixed(2)}</p>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6 flex space-x-4">
+                <button 
+                  onClick={() => router.replace('/')} 
+                  className="inline-block px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                >
+                  Return to Home
+                </button>
+              </div>   
+            </div>
+          ) : (
+            <p>Order details not available.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SuccessPage = () => (
+  <Suspense fallback={<p className="text-lg text-gray-700">Loading order details...</p>}>
+    <SuccessPageContent />
+  </Suspense>
+);
+
+export default SuccessPage;
+

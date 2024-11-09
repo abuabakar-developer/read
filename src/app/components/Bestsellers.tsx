@@ -75,9 +75,10 @@ const Bestsellers = () => {
 
   return (
     <section className="my-12 px-4 lg:px-12 py-6 bg-white text-gray-800">
-      <h2 className="text-5xl font-extrabold tracking-tighter text-left mb-6 font-serif text-gray-900 leading-tight">
-        Our <span className="text-gray-600">Bestsellers</span>
-      </h2>
+<h2 className="text-3xl sm:text-5xl font-extrabold tracking-tighter text-left mb-6 font-serif text-gray-900 leading-tight">
+  Our <span className="text-gray-600">Bestsellers</span>
+</h2>
+
 
       <div className="relative flex items-center justify-center mt-6">
         <button

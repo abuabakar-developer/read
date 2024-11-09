@@ -1,3 +1,5 @@
+
+
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -53,3 +55,6 @@ const BookCard: React.FC<BookCardProps> = ({ book }) => {
 };
 
 export default BookCard;
+
+
+

@@ -10,7 +10,7 @@ interface Book {
     imageLinks?: {
       thumbnail: string;
     };
-    authors?: string[]; // Add authors as an optional property
+    authors?: string[];
   };
 }
 
@@ -75,15 +75,15 @@ const ExploreBooks: React.FC<ExploreBooksProps> = ({ category, searchTerm }) => 
 
   return (
     <section id="explore-books" className="my-12 px-4 lg:px-12 py-6 bg-white text-gray-800">
-      <h2 className="text-5xl font-extrabold tracking-tighter text-left mb-6 font-serif text-gray-900 leading-tight">
+      <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tighter text-left mb-6 font-serif text-gray-900 leading-tight">
         {category ? `${category} Books 2025` : searchTerm ? `Results for "${searchTerm}"` : 'Explore Popular Books'}
       </h2>
-
       <p className="text-lg lg:text-xl text-gray-600 mb-6 text-left leading-relaxed">
         {category || searchTerm ? 'Discover top-rated books.' : 'Check out the most popular books right now.'}
       </p>
 
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
+      {/* Horizontal scroll on smaller screens, grid on larger screens */}
+      <div className="flex overflow-x-auto gap-4 md:grid md:grid-cols-3 lg:grid-cols-5">
         {cachedBooks.length > 0 ? (
           cachedBooks.map((book) => (
             <div key={book.id} className="min-w-[220px] max-w-[220px] group relative transform transition-transform duration-300 hover:scale-105 rounded-lg overflow-hidden">
@@ -92,7 +92,7 @@ const ExploreBooks: React.FC<ExploreBooksProps> = ({ category, searchTerm }) => 
                   id: book.id,
                   title: book.volumeInfo.title,
                   cover_url: book.volumeInfo.imageLinks?.thumbnail || '/default-book-cover.jpg',
-                  author: book.volumeInfo.authors?.join(', ') || 'Unknown Author', // Include the author
+                  author: book.volumeInfo.authors?.join(', ') || 'Unknown Author',
                 }}
               />
             </div>
@@ -110,8 +110,6 @@ const ExploreBooks: React.FC<ExploreBooksProps> = ({ category, searchTerm }) => 
 };
 
 export default ExploreBooks;
-
-
 
  
 

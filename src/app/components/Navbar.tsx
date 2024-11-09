@@ -117,7 +117,7 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, onCategorySelect }) => {
     <>
              
       {/* Upper Navbar - visible on larger screens */}
-      <nav className="bg-gray-50 overflow-x-hidden border-b mx-width-auto border-green-300 fixed w-full top-0 z-50 shadow-md">
+      <nav className="bg-gray-50 w-full overflow-x-hidden border-b border-green-300 fixed top-0 z-50 shadow-md">
         <div className="mx-width-auto px-4 sm:px-6 lg:px-8 xl:px-12">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
