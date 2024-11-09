@@ -117,91 +117,80 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, onCategorySelect }) => {
     <>
              
       {/* Upper Navbar - visible on larger screens */}
-      <nav className="bg-gray-50 overflow-x-hidden border-b mx-width-auto border-green-300 fixed w-full top-0 z-50 shadow-md">
-        <div className="mx-width-auto px-4 sm:px-6 lg:px-8 xl:px-12">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            
-    <Link href="/" className="text-green-900 text-3xl font-bold tracking-wide ml-2 hover:text-green-500 font-cinzel lg:text-4xl">
-    ABreads
-    </Link>
-            {/* Search Bar - visible on larger screens */}
-            <form
-  onSubmit={handleSearch}
-  className="hidden lg:flex relative w-full max-w-lg"
->
-  <div className="relative flex items-center w-full">
-    {/* Search Icon on the Left */}
-    <AiOutlineSearch className="absolute left-3 w-5 h-5 text-gray-400" />
 
-    {/* Search Input Field */}
-    <input
-      type="text"
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      placeholder="Search for books..."
-      className="w-full pl-12 pr-16 py-3 text-gray-800 bg-gray-50 border border-gray-300 rounded-none shadow-lg focus:outline-none focus:ring-4 focus:ring-green-300 focus:bg-white transition-all duration-300 ease-in-out hover:shadow-xl"
-    />
 
-    {/* Submit Button with Icon */}
-    <button
-      type="submit"
-      className="absolute right-0 h-full bg-green-600 text-white px-4 flex items-center justify-center shadow hover:bg-green-500 transition-transform duration-200 transform hover:scale-105 rounded-none"
-    >
-      <AiOutlineSearch className="w-5 h-5" />
-    </button>
-  </div>
-</form>
 
-       {/* Right Icons */}
-       <div className="flex items-center space-x-4">
-  <button onClick={toggleCart} className="relative text-gray-900 hover:text-green-600">
-    <AiOutlineShoppingCart className="text-2xl" />
-    {totalItems > 0 && (
-      <span className="absolute -top-2 -right-2 inline-block w-5 h-5 text-center bg-green-500 text-white rounded-full text-xs">
-        {totalItems}
-      </span>
-    )}
-  </button>
-
-              <div className="flex items-center space-x-4 flex-row-reverse">
-            {userName && (
-        <button
-      onClick={toggleDashboard}
-      className="text-gray-900 hover:text-green-500 transition"
-       >
-      <p className='h-6 font-medium w-6 ml-2 mr-8 text-green-600 border-b border-green-700'>Account</p>
-     </button>
-      )}
-      </div>
-              {userName ? (
-                <button onClick={handleSignOut} className="text-gray-900 hover:text-green-500 transition flex items-center">
-                  <AiOutlineUser className="h-6 w-6" />
-                  <span className="ml-1">Logout</span>
-                </button>
-              ) : (
-                <button onClick={toggleAuthModal} className="text-gray-900 hover:text-green-500 transition">
-                  <AiOutlineUser className="h-6 w-6" />
-                </button>
-              )}
-              {/* Wishlist */}
-              <button
-       onClick={handleViewWishlist}
-       className="relative py-1 px-4 group transition-colors duration-300 rounded-r-xl"
-    >
-       <span className="group-hover:text-green-600 text-gray-700 flex items-center relative">
-       <AiOutlineHeart className="mr-1 text-2xl" /> {/* Increased icon size */}
-       {wishlistCount > 0 && (
-       <span className="absolute -top-2 -right-2 bg-green-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-        {wishlistCount}
-        </span>
-       )}
-          </span>
-           </button>
-            </div>
-          </div>
+<nav className="bg-gray-50 overflow-hidden border-b border-green-300 fixed w-full top-0 z-50 shadow-md">
+  <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="flex justify-between items-center h-16">
+      {/* Logo */}
+      <Link href="/" className="text-green-900 text-xl font-bold tracking-wide ml-2 hover:text-green-500 font-cinzel lg:text-2xl">
+        ABreads
+      </Link>
+      
+      {/* Search Bar - visible on larger screens only */}
+      <form
+        onSubmit={handleSearch}
+        className="hidden lg:flex relative w-full max-w-md"
+      >
+        <div className="relative flex items-center w-full">
+          <AiOutlineSearch className="absolute left-3 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search for books..."
+            className="w-full pl-12 pr-16 py-2 text-gray-800 bg-gray-50 border border-gray-300 rounded-md shadow focus:outline-none focus:ring-4 focus:ring-green-300"
+          />
+          <button
+            type="submit"
+            className="absolute right-0 h-full bg-green-600 text-white px-4 flex items-center justify-center shadow hover:bg-green-500 rounded-md"
+          >
+            <AiOutlineSearch className="w-5 h-5" />
+          </button>
         </div>
-      </nav>
+      </form>
+
+      {/* Right Icons */}
+      <div className="flex items-center space-x-2 lg:space-x-4">
+        {/* Cart Icon */}
+        <button onClick={toggleCart} className="relative text-gray-900 hover:text-green-600">
+          <AiOutlineShoppingCart className="text-lg sm:text-2xl" />
+          {totalItems > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 text-white rounded-full text-xs flex items-center justify-center">
+              {totalItems}
+            </span>
+          )}
+        </button>
+
+        {/* Account/Dashboard or SignIn */}
+        {userName ? (
+          <button
+            onClick={toggleDashboard}
+            className="text-gray-900 hover:text-green-500 text-sm sm:text-base flex items-center"
+          >
+            <p className="h-6 font-medium text-green-600 border-b border-green-700">Account</p>
+          </button>
+        ) : (
+          <button onClick={toggleAuthModal} className="text-gray-900 hover:text-green-500">
+            <AiOutlineUser className="text-lg sm:text-xl" />
+          </button>
+        )}
+
+        {/* Wishlist */}
+        <button onClick={handleViewWishlist} className="relative text-gray-900 hover:text-green-600">
+          <AiOutlineHeart className="text-lg sm:text-2xl" />
+          {wishlistCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-green-600 text-white rounded-full text-xs flex items-center justify-center">
+              {wishlistCount}
+            </span>
+          )}
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
 
 //lower navbar
 
